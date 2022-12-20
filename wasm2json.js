@@ -238,6 +238,13 @@ const OPCODES = _exports.OPCODES = {
   0xbd: 'i64.reinterpret/f64',
   0xbe: 'f32.reinterpret/i32',
   0xbf: 'f64.reinterpret/i64'
+
+  // Narrow-Width Integer Sign Extension
+  0xc0: 'i32.extend8_s',
+  0xc1: 'i32.extend16_s',
+  0xc2: 'i64.extend8_s',
+  0xc3: 'i64.extend16_s',
+  0xc4: 'i64.extend32_s'
 }
 
 const SECTION_IDS = _exports.SECTION_IDS = {
