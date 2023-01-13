@@ -237,7 +237,7 @@ const OPCODES = _exports.OPCODES = {
   0xbc: 'i32.reinterpret/f32',
   0xbd: 'i64.reinterpret/f64',
   0xbe: 'f32.reinterpret/i32',
-  0xbf: 'f64.reinterpret/i64'
+  0xbf: 'f64.reinterpret/i64',
 
   // Narrow-Width Integer Sign Extension
   0xc0: 'i32.extend8_s',
