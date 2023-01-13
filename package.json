@@ -1,6 +1,6 @@
 {
   "name": "redstone-wasm-json-toolkit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "RedStone implementation of wasm-json-toolkit",
   "main": "index.js",
   "scripts": {
