@@ -1,7 +1,7 @@
 {
-  "name": "redstone-wasm-json-toolkit",
-  "version": "1.0.4",
-  "description": "RedStone implementation of wasm-json-toolkit",
+  "name": "warp-wasm-json-toolkit",
+  "version": "1.0.0",
+  "description": "Warp implementation of wasm-json-toolkit",
   "main": "index.js",
   "scripts": {
     "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls",
@@ -13,7 +13,7 @@
     "wasm",
     "cli"
   ],
-  "author": "Redstone Team <dev@redstone.finance>",
+  "author": "Warp Team <dev@warp.cc>",
   "license": "MPL-2.0",
   "dependencies": {
     "buffer-pipe": "0.0.3",
@@ -32,12 +32,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/redstone-finance/redstone-wasm-json-toolkit.git"
+    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit.git"
   },
   "bugs": {
-    "url": "https://github.com/redstone-finance/redstone-wasm-json-toolkit/issues"
+    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit/issues"
   },
-  "homepage": "https://github.com/redstone-finance/redstone-wasm-json-toolkit",
+  "homepage": "https://github.com/warp-contracts/warp-wasm-json-toolkit",
   "standard": {
     "ignore": [
       "test/wabt"

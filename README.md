@@ -6,19 +6,19 @@
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-redstone-wasm-json-toolkit is a fork of https://github.com/ewasm/wasm-json-toolkit which provides consistent API for Buffer object between server and client by using `safe-buffer` library for node and `buffer` for browser.
+warp-wasm-json-toolkit is a fork of https://github.com/ewasm/wasm-json-toolkit which provides consistent API for Buffer object between server and client by using `safe-buffer` library for node and `buffer` for browser.
 
 A small toolkit for converting wasm binaries into json and back.
 
 # INSTALL
 
-`npm install wasm-json-toolkit`
+`npm install warp-wasm-json-toolkit`
 
 # USAGE
 
 ```javascript
 const fs = require('fs');
-const wasm2json = require('wasm-json-toolkit').wasm2json;
+const wasm2json = require('warp-wasm-json-toolkit').wasm2json;
 
 const wasm = fs.readFileSync('./test.wasm');
 const json = wasm2json(wasm);
