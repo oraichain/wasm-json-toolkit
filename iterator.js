@@ -1,4 +1,4 @@
-const Buffer = require('redstone-isomorphic').Buffer;
+const Buffer = require('warp-isomorphic').Buffer;
 const leb128 = require('leb128').unsigned;
 const wasm2json = require('./wasm2json.js');
 const Pipe = require('buffer-pipe');

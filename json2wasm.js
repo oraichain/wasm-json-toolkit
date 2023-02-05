@@ -1,4 +1,4 @@
-const Buffer = require('redstone-isomorphic').Buffer;
+const Buffer = require('warp-isomorphic').Buffer;
 const leb = require('leb128');
 const Stream = require('buffer-pipe');
 const OP_IMMEDIATES = require('./immediates.json');
