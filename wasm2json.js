@@ -1,15 +1,15 @@
-const leb = require('leb128')
-const Stream = require('buffer-pipe')
-const OP_IMMEDIATES = require('./immediates.json')
+const leb = require('leb128');
+const Stream = require('buffer-pipe');
+const OP_IMMEDIATES = require('./immediates.json');
 
-const _exports = module.exports = (buf, filter) => {
-  const stream = new Stream(buf)
-  return _exports.parse(stream, filter)
-}
+const _exports = (module.exports = (buf, filter) => {
+  const stream = new Stream(buf);
+  return _exports.parse(stream, filter);
+});
 // https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#language-types
 // All types are distinguished by a negative varint7 values that is the first
 // byte of their encoding (representing a type constructor)
-const LANGUAGE_TYPES = _exports.LANGUAGE_TYPES = {
+const LANGUAGE_TYPES = (_exports.LANGUAGE_TYPES = {
   0x7f: 'i32',
   0x7e: 'i64',
   0x7d: 'f32',
@@ -17,36 +17,36 @@ const LANGUAGE_TYPES = _exports.LANGUAGE_TYPES = {
   0x70: 'anyFunc',
   0x60: 'func',
   0x40: 'block_type'
-}
+});
 
 // https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#external_kind
 // A single-byte unsigned integer indicating the kind of definition being imported or defined:
-const EXTERNAL_KIND = _exports.EXTERNAL_KIND = {
+const EXTERNAL_KIND = (_exports.EXTERNAL_KIND = {
   0: 'function',
   1: 'table',
   2: 'memory',
   3: 'global'
-}
+});
 
 _exports.parsePreramble = (stream) => {
-  const obj = {}
-  obj.name = 'preramble'
-  obj.magic = [...stream.read(4)]
-  obj.version = [...stream.read(4)]
-  return obj
-}
+  const obj = {};
+  obj.name = 'preramble';
+  obj.magic = [...stream.read(4)];
+  obj.version = [...stream.read(4)];
+  return obj;
+};
 
 _exports.parseSectionHeader = (stream) => {
-  const id = stream.read(1)[0]
-  const size = leb.unsigned.readBn(stream).toNumber()
+  const id = stream.read(1)[0];
+  const size = leb.unsigned.readBn(stream).toNumber();
   return {
     id,
     name: SECTION_IDS[id],
     size
-  }
-}
+  };
+};
 
-const OPCODES = _exports.OPCODES = {
+const OPCODES = (_exports.OPCODES = {
   // flow control
   0x0: 'unreachable',
   0x1: 'nop',
@@ -238,9 +238,9 @@ const OPCODES = _exports.OPCODES = {
   0xbd: 'i64.reinterpret/f64',
   0xbe: 'f32.reinterpret/i32',
   0xbf: 'f64.reinterpret/i64'
-}
+});
 
-const SECTION_IDS = _exports.SECTION_IDS = {
+const SECTION_IDS = (_exports.SECTION_IDS = {
   0: 'custom',
   1: 'type',
   2: 'import',
@@ -253,71 +253,71 @@ const SECTION_IDS = _exports.SECTION_IDS = {
   9: 'element',
   10: 'code',
   11: 'data'
-}
+});
 
 _exports.immediataryParsers = {
-  'varuint1': (stream) => {
-    const int1 = stream.read(1)[0]
-    return int1
+  varuint1: (stream) => {
+    const int1 = stream.read(1)[0];
+    return int1;
   },
-  'varuint32': (stream) => {
-    const int32 = leb.unsigned.read(stream)
-    return int32
+  varuint32: (stream) => {
+    const int32 = leb.unsigned.read(stream);
+    return int32;
   },
-  'varint32': (stream) => {
-    const int32 = leb.signed.read(stream)
-    return int32
+  varint32: (stream) => {
+    const int32 = leb.signed.read(stream);
+    return int32;
   },
-  'varint64': (stream) => {
-    const int64 = leb.signed.read(stream)
-    return int64
+  varint64: (stream) => {
+    const int64 = leb.signed.read(stream);
+    return int64;
   },
-  'uint32': (stream) => {
-    return [...stream.read(4)]
+  uint32: (stream) => {
+    return [...stream.read(4)];
   },
-  'uint64': (stream) => {
-    return [...stream.read(8)]
+  uint64: (stream) => {
+    return [...stream.read(8)];
   },
-  'block_type': (stream) => {
-    const type = stream.read(1)[0]
-    return LANGUAGE_TYPES[type]
+  block_type: (stream) => {
+    const type = stream.read(1)[0];
+    return LANGUAGE_TYPES[type];
   },
-  'br_table': (stream) => {
+  br_table: (stream) => {
     const json = {
       targets: []
-    }
-    const num = leb.unsigned.readBn(stream).toNumber()
+    };
+    const num = leb.unsigned.readBn(stream).toNumber();
     for (let i = 0; i < num; i++) {
-      const target = leb.unsigned.readBn(stream).toNumber()
-      json.targets.push(target)
+      const target = leb.unsigned.readBn(stream).toNumber();
+      json.targets.push(target);
     }
-    json.defaultTarget = leb.unsigned.readBn(stream).toNumber()
-    return json
+    json.defaultTarget = leb.unsigned.readBn(stream).toNumber();
+    return json;
   },
-  'call_indirect': (stream) => {
-    const json = {}
-    json.index = leb.unsigned.readBn(stream).toNumber()
-    json.reserved = stream.read(1)[0]
-    return json
+  call_indirect: (stream) => {
+    const json = {};
+    json.index = leb.unsigned.readBn(stream).toNumber();
+    json.reserved = stream.read(1)[0];
+    return json;
   },
-  'memory_immediate': (stream) => {
-    const json = {}
-    json.flags = leb.unsigned.readBn(stream).toNumber()
-    json.offset = leb.unsigned.readBn(stream).toNumber()
-    return json
+  memory_immediate: (stream) => {
+    const json = {};
+    json.flags = leb.unsigned.readBn(stream).toNumber();
+    json.offset = leb.unsigned.readBn(stream).toNumber();
+    return json;
   }
-}
+};
 
 _exports.typeParsers = {
-  'function': (stream) => {
-    return leb.unsigned.readBn(stream).toNumber()
+  function: (stream) => {
+    return leb.unsigned.readBn(stream).toNumber();
   },
   table: (stream) => {
-    const entry = {}
-    const type = stream.read(1)[0] // read single byte
-    entry.elementType = LANGUAGE_TYPES[type]
-    entry.limits = _exports.typeParsers.memory(stream)
-    return entry
+    const entry = {};
+    const type = stream.read(1)[0]; // read single byte
+    entry.elementType = LANGUAGE_TYPES[type];
+    entry.limits = _exports.typeParsers.memory(stream);
+    return entry;
   },
   /**
    * parses a [`global_type`](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#global_type)
@@ -325,11 +325,11 @@ _exports.typeParsers = {
    * @return {Object}
    */
   global: (stream) => {
-    const global = {}
-    let type = stream.read(1)[0]
-    global.contentType = LANGUAGE_TYPES[type]
-    global.mutability = stream.read(1)[0]
-    return global
+    const global = {};
+    let type = stream.read(1)[0];
+    global.contentType = LANGUAGE_TYPES[type];
+    global.mutability = stream.read(1)[0];
+    return global;
   },
   /**
    * Parses a [resizable_limits](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#resizable_limits)
@@ -337,13 +337,13 @@ _exports.typeParsers = {
    * return {Object}
    */
   memory: (stream) => {
-    const limits = {}
-    limits.flags = leb.unsigned.readBn(stream).toNumber()
-    limits.intial = leb.unsigned.readBn(stream).toNumber()
+    const limits = {};
+    limits.flags = leb.unsigned.readBn(stream).toNumber();
+    limits.intial = leb.unsigned.readBn(stream).toNumber();
     if (limits.flags === 1) {
-      limits.maximum = leb.unsigned.readBn(stream).toNumber()
+      limits.maximum = leb.unsigned.readBn(stream).toNumber();
     }
-    return limits
+    return limits;
   },
   /**
    * Parses a [init_expr](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#resizable_limits)
@@ -351,267 +351,268 @@ _exports.typeParsers = {
    * expression followed by the end opcode as a delimiter.
    */
   initExpr: (stream) => {
-    const op = _exports.parseOp(stream)
-    stream.read(1) // skip the `end`
-    return op
+    const op = _exports.parseOp(stream);
+    stream.read(1); // skip the `end`
+    return op;
   }
-}
+};
 
-const sectionParsers = _exports.sectionParsers = {
-  'custom': (stream, header) => {
+const sectionParsers = (_exports.sectionParsers = {
+  custom: (stream, header) => {
     const json = {
       name: 'custom'
-    }
-    const section = new Stream(stream.read(header.size))
-    const nameLen = leb.unsigned.readBn(section).toNumber()
-    const name = section.read(nameLen)
-    json.sectionName = Buffer.from(name).toString()
-    json.payload = [...section.buffer]
-    return json
+    };
+    const section = new Stream(stream.read(header.size));
+    const nameLen = leb.unsigned.readBn(section).toNumber();
+    const name = section.read(nameLen);
+    json.sectionName = Buffer.from(name).toString();
+    json.payload = [...section.buffer];
+    return json;
   },
-  'type': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  type: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'type',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      let type = stream.read(1)[0]
+      let type = stream.read(1)[0];
       const entry = {
         form: LANGUAGE_TYPES[type],
         params: []
-      }
+      };
 
-      const paramCount = leb.unsigned.readBn(stream).toNumber()
+      const paramCount = leb.unsigned.readBn(stream).toNumber();
 
       // parse the entries
       for (let q = 0; q < paramCount; q++) {
-        const type = stream.read(1)[0]
-        entry.params.push(LANGUAGE_TYPES[type])
+        const type = stream.read(1)[0];
+        entry.params.push(LANGUAGE_TYPES[type]);
       }
-      const numOfReturns = leb.unsigned.readBn(stream).toNumber()
+      const numOfReturns = leb.unsigned.readBn(stream).toNumber();
       if (numOfReturns) {
-        type = stream.read(1)[0]
-        entry.return_type = LANGUAGE_TYPES[type]
+        type = stream.read(1)[0];
+        entry.return_type = LANGUAGE_TYPES[type];
       }
 
-      json.entries.push(entry)
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'import': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  import: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'import',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = {}
-      const moduleLen = leb.unsigned.readBn(stream).toNumber()
-      entry.moduleStr = Buffer.from(stream.read(moduleLen)).toString()
+      const entry = {};
+      const moduleLen = leb.unsigned.readBn(stream).toNumber();
+      entry.moduleStr = Buffer.from(stream.read(moduleLen)).toString();
 
-      const fieldLen = leb.unsigned.readBn(stream).toNumber()
-      entry.fieldStr = Buffer.from(stream.read(fieldLen)).toString()
-      const kind = stream.read(1)[0] // read single byte
-      entry.kind = EXTERNAL_KIND[kind]
-      entry.type = _exports.typeParsers[entry.kind](stream)
+      const fieldLen = leb.unsigned.readBn(stream).toNumber();
+      entry.fieldStr = Buffer.from(stream.read(fieldLen)).toString();
+      const kind = stream.read(1)[0]; // read single byte
+      entry.kind = EXTERNAL_KIND[kind];
+      entry.type = _exports.typeParsers[entry.kind](stream);
 
-      json.entries.push(entry)
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'function': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  function: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'function',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = leb.unsigned.readBn(stream).toNumber()
-      json.entries.push(entry)
+      const entry = leb.unsigned.readBn(stream).toNumber();
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'table': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  table: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'table',
       entries: []
-    }
+    };
 
     // parse table_type
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = _exports.typeParsers.table(stream)
-      json.entries.push(entry)
+      const entry = _exports.typeParsers.table(stream);
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'memory': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  memory: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'memory',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = _exports.typeParsers.memory(stream)
-      json.entries.push(entry)
+      const entry = _exports.typeParsers.memory(stream);
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'global': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  global: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'global',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = {}
-      entry.type = _exports.typeParsers.global(stream)
-      entry.init = _exports.typeParsers.initExpr(stream)
+      const entry = {};
+      entry.type = _exports.typeParsers.global(stream);
+      entry.init = _exports.typeParsers.initExpr(stream);
 
-      json.entries.push(entry)
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'export': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  export: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'export',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const strLength = leb.unsigned.readBn(stream).toNumber()
-      const entry = {}
-      entry.field_str = Buffer.from(stream.read(strLength)).toString()
-      const kind = stream.read(1)[0]
-      entry.kind = EXTERNAL_KIND[kind]
-      entry.index = leb.unsigned.readBn(stream).toNumber()
-      json.entries.push(entry)
+      const strLength = leb.unsigned.readBn(stream).toNumber();
+      const entry = {};
+      entry.field_str = Buffer.from(stream.read(strLength)).toString();
+      const kind = stream.read(1)[0];
+      entry.kind = EXTERNAL_KIND[kind];
+      entry.index = leb.unsigned.readBn(stream).toNumber();
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'start': (stream) => {
+  start: (stream) => {
     const json = {
       name: 'start'
-    }
+    };
 
-    json.index = leb.unsigned.readBn(stream).toNumber()
-    return json
+    json.index = leb.unsigned.readBn(stream).toNumber();
+    return json;
   },
-  'element': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  element: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'element',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
       const entry = {
         elements: []
-      }
+      };
 
-      entry.index = leb.unsigned.readBn(stream).toNumber()
-      entry.offset = _exports.typeParsers.initExpr(stream)
-      const numElem = leb.unsigned.readBn(stream).toNumber()
+      entry.index = leb.unsigned.readBn(stream).toNumber();
+      entry.offset = _exports.typeParsers.initExpr(stream);
+      const numElem = leb.unsigned.readBn(stream).toNumber();
       for (let i = 0; i < numElem; i++) {
-        const elem = leb.unsigned.readBn(stream).toNumber()
-        entry.elements.push(elem)
+        const elem = leb.unsigned.readBn(stream).toNumber();
+        entry.elements.push(elem);
       }
 
-      json.entries.push(entry)
+      json.entries.push(entry);
     }
-    return json
+    return json;
   },
-  'code': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  code: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'code',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
       const codeBody = {
         locals: [],
         code: []
-      }
+      };
 
-      let bodySize = leb.unsigned.readBn(stream).toNumber()
-      const endBytes = stream.bytesRead + bodySize
+      let bodySize = leb.unsigned.readBn(stream).toNumber();
+      const endBytes = stream.bytesRead + bodySize;
       // parse locals
-      const localCount = leb.unsigned.readBn(stream).toNumber()
+      const localCount = leb.unsigned.readBn(stream).toNumber();
 
       for (let q = 0; q < localCount; q++) {
-        const local = {}
-        local.count = leb.unsigned.readBn(stream).toNumber()
-        const type = stream.read(1)[0]
-        local.type = LANGUAGE_TYPES[type]
-        codeBody.locals.push(local)
+        const local = {};
+        local.count = leb.unsigned.readBn(stream).toNumber();
+        const type = stream.read(1)[0];
+        local.type = LANGUAGE_TYPES[type];
+        codeBody.locals.push(local);
       }
 
       // parse code
       while (stream.bytesRead < endBytes) {
-        const op = _exports.parseOp(stream)
-        codeBody.code.push(op)
+        const op = _exports.parseOp(stream);
+        if (op) codeBody.code.push(op);
       }
 
-      json.entries.push(codeBody)
+      json.entries.push(codeBody);
     }
-    return json
+    return json;
   },
-  'data': (stream) => {
-    const numberOfEntries = leb.unsigned.readBn(stream).toNumber()
+  data: (stream) => {
+    const numberOfEntries = leb.unsigned.readBn(stream).toNumber();
     const json = {
       name: 'data',
       entries: []
-    }
+    };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = {}
-      entry.index = leb.unsigned.readBn(stream).toNumber()
-      entry.offset = _exports.typeParsers.initExpr(stream)
-      const segmentSize = leb.unsigned.readBn(stream).toNumber()
-      entry.data = [...stream.read(segmentSize)]
+      const entry = {};
+      entry.index = leb.unsigned.readBn(stream).toNumber();
+      entry.offset = _exports.typeParsers.initExpr(stream);
+      const segmentSize = leb.unsigned.readBn(stream).toNumber();
+      entry.data = [...stream.read(segmentSize)];
 
-      json.entries.push(entry)
+      json.entries.push(entry);
     }
-    return json
+    return json;
   }
-}
+});
 
 _exports.parseOp = (stream) => {
-  const json = {}
-  const op = stream.read(1)[0]
-  const fullName = OPCODES[op]
-  let [type, name] = fullName.split('.')
+  const json = {};
+  const op = stream.read(1)[0];
+  const fullName = OPCODES[op];
+  if (!fullName) return;
+  let [type, name] = fullName.split('.');
 
   if (name === undefined) {
-    name = type
+    name = type;
   } else {
-    json.return_type = type
+    json.return_type = type;
   }
 
-  json.name = name
+  json.name = name;
 
-  const immediates = OP_IMMEDIATES[name === 'const' ? type : name]
+  const immediates = OP_IMMEDIATES[name === 'const' ? type : name];
   if (immediates) {
-    json.immediates = _exports.immediataryParsers[immediates](stream)
+    json.immediates = _exports.immediataryParsers[immediates](stream);
   }
-  return json
-}
+  return json;
+};
 
 _exports.parse = (stream, filter) => {
-  const preramble = _exports.parsePreramble(stream)
-  const json = [preramble]
+  const preramble = _exports.parsePreramble(stream);
+  const json = [preramble];
 
   while (!stream.end) {
-    const header = _exports.parseSectionHeader(stream)
-    json.push(sectionParsers[header.name](stream, header))
+    const header = _exports.parseSectionHeader(stream);
+    json.push(sectionParsers[header.name](stream, header));
   }
-  return json
-}
+  return json;
+};
