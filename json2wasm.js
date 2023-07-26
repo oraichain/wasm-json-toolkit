@@ -277,11 +277,11 @@ const immediataryGenerators = {
     return stream;
   },
   uint32: (json, stream) => {
-    stream.write(json);
+    stream.writeArray(json);
     return stream;
   },
   uint64: (json, stream) => {
-    stream.write(json);
+    stream.writeArray(json);
     return stream;
   },
   block_type: (json, stream) => {
@@ -317,7 +317,7 @@ const entryGenerators = {
     const len = entry.params.length; // number of parameters
     unsigned.write(len, stream);
     if (len !== 0) {
-      entry.params.forEach((type) => stream.writeByte(LANGUAGE_TYPES[type])); // the paramter types
+      stream.writeArray(entry.params.map((type) => LANGUAGE_TYPES[type])); // the paramter types
     }
 
     stream.writeByte(entry.return_type ? 1 : 0); // number of return types
@@ -330,10 +330,10 @@ const entryGenerators = {
   import: (entry, stream) => {
     // write the module string
     unsigned.write(entry.moduleStr.length, stream);
-    stream.write(entry.moduleStr);
+    stream.writeString(entry.moduleStr);
     // write the field string
     unsigned.write(entry.fieldStr.length, stream);
-    stream.write(entry.fieldStr);
+    stream.writeString(entry.fieldStr);
     stream.writeByte(EXTERNAL_KIND[entry.kind]);
     typeGenerators[entry.kind](entry.type, stream);
   },
@@ -349,10 +349,8 @@ const entryGenerators = {
   },
   memory: typeGenerators.memory,
   export: (entry, stream) => {
-    const fieldStr = Buffer.from(entry.field_str);
-    const strLen = fieldStr.length;
-    unsigned.write(strLen, stream);
-    stream.write(fieldStr);
+    unsigned.write(entry.field_str.length, stream);
+    stream.writeString(entry.field_str);
     stream.writeByte(EXTERNAL_KIND[entry.kind]);
     unsigned.write(entry.index, stream);
     return stream;
@@ -390,7 +388,7 @@ const entryGenerators = {
     unsigned.write(entry.index, stream);
     typeGenerators.initExpr(entry.offset, stream);
     unsigned.write(entry.data.length, stream);
-    stream.write(entry.data);
+    stream.writeArray(entry.data);
     return stream;
   }
 };
@@ -403,8 +401,8 @@ const generateSection = function (json, stream) {
 
   if (name === 'custom') {
     unsigned.write(json.sectionName.length, payload);
-    payload.write(json.sectionName);
-    payload.write(json.payload);
+    payload.writeString(json.sectionName);
+    payload.writeArray(json.payload);
   } else if (name === 'start') {
     unsigned.write(json.index, payload);
   } else {
@@ -420,8 +418,8 @@ const generateSection = function (json, stream) {
 };
 
 const generatePreramble = (json, stream) => {
-  stream.write(json.magic);
-  stream.write(json.version);
+  stream.writeArray(json.magic);
+  stream.writeArray(json.version);
   return stream;
 };
 

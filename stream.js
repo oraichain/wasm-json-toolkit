@@ -48,11 +48,20 @@ class WriteStream {
 
   /**
    * Wites a buffer to the pipe
-   * @param {Buffer | string} buf
+   * @param {Buffer} buf
    */
   write(buf) {
-    (Buffer.isBuffer(buf) ? buf : Buffer.from(buf)).copy(this._buffer, this._bytesWrote);
+    buf.copy(this._buffer, this._bytesWrote);
     this._bytesWrote += buf.length;
+  }
+
+  writeArray(arr) {
+    for (const byte of arr) this._buffer[this._bytesWrote++] = byte;
+  }
+
+  writeString(str) {
+    this._buffer.write(str, this._bytesWrote);
+    this._bytesWrote += str.length;
   }
 
   writeByte(byte) {
