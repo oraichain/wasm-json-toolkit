@@ -39,9 +39,9 @@ class ReadStream {
 class WriteStream {
   /**
    * Creates a new instance of a pipe
-   * @param {number} size - an optional buffer to start with, default is 100kb
+   * @param {number} size - an optional buffer to start with, default is 1000kb = 2 * maximum contract size
    */
-  constructor(size = 102400) {
+  constructor(size = 1024000) {
     this._buffer = Buffer.allocUnsafe(size);
     this._bytesWrote = 0;
   }
