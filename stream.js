@@ -51,10 +51,6 @@ class WriteStream {
    * @param {Buffer} buf
    */
   write(buf) {
-    if (this._buffer.length < this._bytesWrote + buf.length) {
-      // x2 when full
-      this._buffer = Buffer.concat([this._buffer, Buffer.allocUnsafe(this._buffer.length)]);
-    }
     (Buffer.isBuffer(buf) ? buf : Buffer.from(buf)).copy(this._buffer, this._bytesWrote);
     this._bytesWrote += buf.length;
   }

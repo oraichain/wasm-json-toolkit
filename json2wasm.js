@@ -438,7 +438,8 @@ const generateOp = (json, stream = new WriteStream()) => {
   return stream;
 };
 
-module.exports = (json, stream = new WriteStream()) => {
+module.exports = (json, size) => {
+  const stream = new WriteStream(size);
   const [preamble, ...rest] = json;
   generatePreramble(preamble, stream);
   for (let item of rest) {

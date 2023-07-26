@@ -303,10 +303,11 @@ const meterJSON = (json, opts) => {
  * @param {String} [opts.meterType='i64'] the register type that is used to meter. Can be `i64`, `i32`, `f64`, `f32`
  * @return {Buffer}
  */
-const meterWASM = (wasm, opts = {}) => {
+const meterWASM = (wasm, opts = {}, size = 0) => {
   let json = wasm2json(wasm);
   json = meterJSON(json, opts);
-  return json2wasm(json);
+  // need x2 size of wasm for buffering
+  return json2wasm(json, Math.max(size, 2 * wasm.length));
 };
 
 module.exports = { meterWASM, meterJSON };
