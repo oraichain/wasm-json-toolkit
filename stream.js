@@ -39,9 +39,9 @@ class ReadStream {
 class WriteStream {
   /**
    * Creates a new instance of a pipe
-   * @param {number} size - an optional buffer to start with
+   * @param {number} size - an optional buffer to start with, default is 100kb
    */
-  constructor(size = 1024000) {
+  constructor(size = 102400) {
     this._buffer = Buffer.allocUnsafe(size);
     this._bytesWrote = 0;
   }
@@ -51,6 +51,10 @@ class WriteStream {
    * @param {Buffer} buf
    */
   write(buf) {
+    if (this._buffer.length < this._bytesWrote + buf.length) {
+      // x2 when full
+      this._buffer = Buffer.concat([this._buffer, Buffer.allocUnsafe(this._buffer.length)]);
+    }
     (Buffer.isBuffer(buf) ? buf : Buffer.from(buf)).copy(this._buffer, this._bytesWrote);
     this._bytesWrote += buf.length;
   }
