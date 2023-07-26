@@ -29,18 +29,21 @@ function readBn(stream) {
   return num;
 }
 
+/**
+ * LEB128 encodeds an interger
+ * @param {Number} number
+ * @param {WriteStream} stream
+ */
 function write(number, stream) {
-  const num = new Bn(number);
-  while (true) {
-    const i = num.maskn(7).toNumber();
-    num.ishrn(7);
-    if (num.isZero()) {
-      stream.write([i]);
-      break;
-    } else {
-      stream.write([i | 0x80]);
-    }
-  }
+  let a = number;
+  do {
+    let byte = a & 0b01111111;
+    // we only care about lower 7 bits
+    a >>= 8 - 1;
+    // shift
+    if (a) byte = byte | 0b10000000; /* if remaining is truthy (!= 0), set highest bit */
+    stream.write([byte]);
+  } while (a);
 }
 
 /**

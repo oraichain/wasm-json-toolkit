@@ -225,15 +225,15 @@ const typeGenerators = {
     unsigned.write(json, stream);
   },
   table: (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json.elementType]]);
+    stream.writeByte(LANGUAGE_TYPES[json.elementType]);
     typeGenerators.memory(json.limits, stream);
   },
   /**
    * generates a [`global_type`](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#global_type)
    */
   global: (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json.contentType]]);
-    stream.write([json.mutability]);
+    stream.writeByte(LANGUAGE_TYPES[json.contentType]);
+    stream.writeByte(json.mutability);
   },
   /**
    * Generates a [resizable_limits](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#resizable_limits)
@@ -261,7 +261,7 @@ const typeGenerators = {
 
 const immediataryGenerators = {
   varuint1: (json, stream) => {
-    stream.write([json]);
+    stream.writeByte(json);
     return stream;
   },
   varuint32: (json, stream) => {
@@ -285,7 +285,7 @@ const immediataryGenerators = {
     return stream;
   },
   block_type: (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json]]);
+    stream.writeByte(LANGUAGE_TYPES[json]);
     return stream;
   },
   br_table: (json, stream) => {
@@ -298,7 +298,7 @@ const immediataryGenerators = {
   },
   call_indirect: (json, stream) => {
     unsigned.write(json.index, stream);
-    stream.write([json.reserved]);
+    stream.writeByte(json.reserved);
     return stream;
   },
   memory_immediate: (json, stream) => {
@@ -312,18 +312,18 @@ const immediataryGenerators = {
 const entryGenerators = {
   type: (entry, stream) => {
     // a single type entry binary encoded
-    stream.write([LANGUAGE_TYPES[entry.form]]); // the form
+    stream.writeByte(LANGUAGE_TYPES[entry.form]); // the form
 
     const len = entry.params.length; // number of parameters
     unsigned.write(len, stream);
     if (len !== 0) {
-      stream.write(entry.params.map((type) => LANGUAGE_TYPES[type])); // the paramter types
+      entry.params.forEach((type) => stream.writeByte(LANGUAGE_TYPES[type])); // the paramter types
     }
 
-    stream.write([entry.return_type ? 1 : 0]); // number of return types
+    stream.writeByte(entry.return_type ? 1 : 0); // number of return types
 
     if (entry.return_type) {
-      stream.write([LANGUAGE_TYPES[entry.return_type]]);
+      stream.writeByte(LANGUAGE_TYPES[entry.return_type]);
     }
     return stream.buffer;
   },
@@ -334,7 +334,7 @@ const entryGenerators = {
     // write the field string
     unsigned.write(entry.fieldStr.length, stream);
     stream.write(entry.fieldStr);
-    stream.write([EXTERNAL_KIND[entry.kind]]);
+    stream.writeByte(EXTERNAL_KIND[entry.kind]);
     typeGenerators[entry.kind](entry.type, stream);
   },
   function: (entry, stream) => {
@@ -353,7 +353,7 @@ const entryGenerators = {
     const strLen = fieldStr.length;
     unsigned.write(strLen, stream);
     stream.write(fieldStr);
-    stream.write([EXTERNAL_KIND[entry.kind]]);
+    stream.writeByte(EXTERNAL_KIND[entry.kind]);
     unsigned.write(entry.index, stream);
     return stream;
   },
@@ -368,19 +368,22 @@ const entryGenerators = {
     return stream;
   },
   code: (entry, stream) => {
-    const bytesWrote = stream.bytesWrote;
+    // 4 bytes for store length, so use the same allocated memory
+    const codeStream = stream.substream(4);
+
     // write the locals
-    unsigned.write(entry.locals.length, stream);
+    unsigned.write(entry.locals.length, codeStream);
     for (let local of entry.locals) {
-      unsigned.write(local.count, stream);
-      stream.write([LANGUAGE_TYPES[local.type]]);
+      unsigned.write(local.count, codeStream);
+      codeStream.writeByte(LANGUAGE_TYPES[local.type]);
     }
     // write opcode
     for (let op of entry.code) {
-      generateOp(op, stream);
+      generateOp(op, codeStream);
     }
 
-    unsigned.write(stream.bytesWrote - bytesWrote, stream);
+    unsigned.write(codeStream.bytesWrote, stream);
+    stream.write(codeStream.buffer);
     return stream;
   },
   data: (entry, stream) => {
@@ -394,24 +397,25 @@ const entryGenerators = {
 
 const generateSection = function (json, stream) {
   const name = json.name;
-  const bytesWrote = stream.bytesWrote;
-  stream.write([SECTION_IDS[name]]);
+  // 4 bytes for store length, so use the same allocated memory
+  const payload = stream.substream(4);
+  stream.writeByte(SECTION_IDS[name]);
 
   if (name === 'custom') {
-    unsigned.write(json.sectionName.length, stream);
-    stream.write(json.sectionName);
-    stream.write(json.payload);
+    unsigned.write(json.sectionName.length, payload);
+    payload.write(json.sectionName);
+    payload.write(json.payload);
   } else if (name === 'start') {
-    unsigned.write(json.index, stream);
+    unsigned.write(json.index, payload);
   } else {
-    unsigned.write(json.entries.length, stream);
+    unsigned.write(json.entries.length, payload);
     for (let entry of json.entries) {
-      entryGenerators[name](entry, stream);
+      entryGenerators[name](entry, payload);
     }
   }
-
   // write the size of the payload
-  unsigned.write(stream.bytesWrote - bytesWrote, stream);
+  unsigned.write(payload.bytesWrote, stream);
+  stream.write(payload.buffer);
   return stream;
 };
 
@@ -427,7 +431,7 @@ const generateOp = (json, stream) => {
     name = json.return_type + '.' + name;
   }
 
-  stream.write([OPCODES[name]]);
+  stream.writeByte(OPCODES[name]);
 
   const immediates = OP_IMMEDIATES[json.name === 'const' ? json.return_type : json.name];
   if (immediates) {

@@ -48,11 +48,24 @@ class WriteStream {
 
   /**
    * Wites a buffer to the pipe
-   * @param {Buffer} buf
+   * @param {Buffer | string} buf
    */
   write(buf) {
     (Buffer.isBuffer(buf) ? buf : Buffer.from(buf)).copy(this._buffer, this._bytesWrote);
     this._bytesWrote += buf.length;
+  }
+
+  writeByte(byte) {
+    this._buffer[this._bytesWrote++] = byte;
+  }
+
+  /**
+   * return the internal buffer
+   * @param {number} index
+   * @return {WriteStream}
+   */
+  substream(index) {
+    return new WriteStream(this._buffer.subarray(this._bytesWrote + index));
   }
 
   /**

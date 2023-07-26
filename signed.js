@@ -32,6 +32,11 @@ function readBn(stream) {
   return num.fromTwos(shift);
 }
 
+/**
+ * LEB128 encodeds an interger
+ * @param {Number} number
+ * @param {WriteStream} stream
+ */
 function write(number, stream) {
   let num = new Bn(number);
   const isNeg = num.isNeg();
