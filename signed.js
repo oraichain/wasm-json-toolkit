@@ -48,10 +48,10 @@ function write(number, stream) {
     const i = num.maskn(7).toNumber();
     num.ishrn(7);
     if ((isNegOne(num) && (i & 0x40) !== 0) || (num.isZero() && (i & 0x40) === 0)) {
-      stream.write([i]);
+      stream.writeByte(i);
       break;
     } else {
-      stream.write([i | 0x80]);
+      stream.writeByte(i | 0x80);
     }
   }
 

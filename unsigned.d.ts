@@ -1,3 +1,5 @@
+import { WriteStream, ReadStream } from './stream';
+
 /**
  * LEB128 encodeds an interger
  * @param {String|Number} num
@@ -10,6 +12,7 @@ export function encode(num: string | number): Buffer;
  * @return {String}
  */
 export function decode(buffer: Buffer): string;
-export function read(stream: any): any;
-export function readBn(stream: any): any;
-export function write(number: any, stream: any): void;
+export function read(stream: ReadStream): any;
+export function readBn(stream: ReadStream): any;
+export function write(data: any, stream: WriteStream): void;
+export function writeByte(num: number, stream: WriteStream): void;

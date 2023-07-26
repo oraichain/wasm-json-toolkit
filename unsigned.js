@@ -42,7 +42,7 @@ function write(number, stream) {
     a >>= 8 - 1;
     // shift
     if (a) byte = byte | 0b10000000; /* if remaining is truthy (!= 0), set highest bit */
-    stream.write([byte]);
+    stream.writeByte(byte);
   } while (a);
 }
 
