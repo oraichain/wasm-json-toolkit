@@ -1,9 +1,10 @@
 {
-  "name": "warp-wasm-json-toolkit",
-  "version": "1.0.1",
+  "name": "@oraichain/wasm-json-toolkit",
+  "version": "1.0.2",
   "description": "Warp implementation of wasm-json-toolkit",
   "main": "index.js",
   "scripts": {
+    "deploy": "yarn publish --access public --patch",
     "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls",
     "coverage": "nyc npm test",
     "lint": "standard",
@@ -30,12 +31,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit.git"
+    "url": "https://github.com/oraichain/wasm-json-toolkit.git"
   },
   "bugs": {
-    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit/issues"
+    "url": "https://github.com/oraichain/wasm-json-toolkit.git/issues"
   },
-  "homepage": "https://github.com/warp-contracts/warp-wasm-json-toolkit",
+  "homepage": "https://github.com/oraichain/wasm-json-toolkit.git",
   "standard": {
     "ignore": [
       "test/wabt"
