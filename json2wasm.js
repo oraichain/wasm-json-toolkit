@@ -310,7 +310,7 @@ const immediataryGenerators = {
 };
 
 const entryGenerators = {
-  type: (entry, stream = new WriteStream()) => {
+  type: (entry, stream) => {
     // a single type entry binary encoded
     stream.write([LANGUAGE_TYPES[entry.form]]); // the form
 
@@ -327,7 +327,7 @@ const entryGenerators = {
     }
     return stream.buffer;
   },
-  import: (entry, stream = new WriteStream()) => {
+  import: (entry, stream) => {
     // write the module string
     unsigned.write(entry.moduleStr.length, stream);
     stream.write(entry.moduleStr);
@@ -337,18 +337,18 @@ const entryGenerators = {
     stream.write([EXTERNAL_KIND[entry.kind]]);
     typeGenerators[entry.kind](entry.type, stream);
   },
-  function: (entry, stream = new WriteStream()) => {
+  function: (entry, stream) => {
     unsigned.write(entry, stream);
     return stream.buffer;
   },
   table: typeGenerators.table,
-  global: (entry, stream = new WriteStream()) => {
+  global: (entry, stream) => {
     typeGenerators.global(entry.type, stream);
     typeGenerators.initExpr(entry.init, stream);
     return stream;
   },
   memory: typeGenerators.memory,
-  export: (entry, stream = new WriteStream()) => {
+  export: (entry, stream) => {
     const fieldStr = Buffer.from(entry.field_str);
     const strLen = fieldStr.length;
     unsigned.write(strLen, stream);
@@ -357,7 +357,7 @@ const entryGenerators = {
     unsigned.write(entry.index, stream);
     return stream;
   },
-  element: (entry, stream = new WriteStream()) => {
+  element: (entry, stream) => {
     unsigned.write(entry.index, stream);
     typeGenerators.initExpr(entry.offset, stream);
     unsigned.write(entry.elements.length, stream);
@@ -367,24 +367,23 @@ const entryGenerators = {
 
     return stream;
   },
-  code: (entry, stream = new WriteStream()) => {
-    let codeStream = new WriteStream();
+  code: (entry, stream) => {
+    const bytesWrote = stream.bytesWrote;
     // write the locals
-    unsigned.write(entry.locals.length, codeStream);
+    unsigned.write(entry.locals.length, stream);
     for (let local of entry.locals) {
-      unsigned.write(local.count, codeStream);
-      codeStream.write([LANGUAGE_TYPES[local.type]]);
+      unsigned.write(local.count, stream);
+      stream.write([LANGUAGE_TYPES[local.type]]);
     }
     // write opcode
     for (let op of entry.code) {
-      generateOp(op, codeStream);
+      generateOp(op, stream);
     }
 
-    unsigned.write(codeStream.bytesWrote, stream);
-    stream.write(codeStream.buffer);
+    unsigned.write(stream.bytesWrote - bytesWrote, stream);
     return stream;
   },
-  data: (entry, stream = new WriteStream()) => {
+  data: (entry, stream) => {
     unsigned.write(entry.index, stream);
     typeGenerators.initExpr(entry.offset, stream);
     unsigned.write(entry.data.length, stream);
@@ -393,37 +392,36 @@ const entryGenerators = {
   }
 };
 
-const generateSection = function (json, stream = new WriteStream()) {
+const generateSection = function (json, stream) {
   const name = json.name;
-  const payload = new WriteStream();
+  const bytesWrote = stream.bytesWrote;
   stream.write([SECTION_IDS[name]]);
 
   if (name === 'custom') {
-    unsigned.write(json.sectionName.length, payload);
-    payload.write(json.sectionName);
-    payload.write(json.payload);
+    unsigned.write(json.sectionName.length, stream);
+    stream.write(json.sectionName);
+    stream.write(json.payload);
   } else if (name === 'start') {
-    unsigned.write(json.index, payload);
+    unsigned.write(json.index, stream);
   } else {
-    unsigned.write(json.entries.length, payload);
+    unsigned.write(json.entries.length, stream);
     for (let entry of json.entries) {
-      entryGenerators[name](entry, payload);
+      entryGenerators[name](entry, stream);
     }
   }
 
   // write the size of the payload
-  unsigned.write(payload.bytesWrote, stream);
-  stream.write(payload.buffer);
+  unsigned.write(stream.bytesWrote - bytesWrote, stream);
   return stream;
 };
 
-const generatePreramble = (json, stream = new WriteStream()) => {
+const generatePreramble = (json, stream) => {
   stream.write(json.magic);
   stream.write(json.version);
   return stream;
 };
 
-const generateOp = (json, stream = new WriteStream()) => {
+const generateOp = (json, stream) => {
   let name = json.name;
   if (json.return_type !== undefined) {
     name = json.return_type + '.' + name;
