@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/wasm-json-toolkit",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Warp implementation of wasm-json-toolkit",
   "main": "index.js",
   "scripts": {
