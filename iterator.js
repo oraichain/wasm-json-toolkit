@@ -1,5 +1,5 @@
 const unsigned = require('./unsigned');
-const wasm2json = require('./wasm2json.js');
+const wasm2json = require('./wasm2json');
 const { ReadStream } = require('./stream');
 
 const SECTIONS = ['custom', 'type', 'import', 'function', 'table', 'memory', 'global', 'export', 'start', 'element', 'code', 'data'];

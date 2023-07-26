@@ -3,14 +3,14 @@
  * @param {Buffer}
  * @return {Array}
  */
-exports.wasm2json = require('./wasm2json')
+exports.wasm2json = require('./wasm2json');
 
 /**
  * Converts a json representation to a wasm binary
  * @param {Array}
  * @return {Buffer}
  */
-exports.json2wasm = require('./json2wasm')
+exports.json2wasm = require('./json2wasm');
 
 /**
  * Converts text to json. The only accepts text that is a simple list of opcode name and immediates
@@ -24,5 +24,7 @@ exports.json2wasm = require('./json2wasm')
  * `
  * const json = text2json(codeStr)
  */
-exports.text2json = require('./text2json')
-exports.Iterator = require('./iterator')
+exports.text2json = require('./text2json');
+exports.Iterator = require('./iterator');
+
+exports.metering = require('./metering');
