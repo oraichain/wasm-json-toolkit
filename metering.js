@@ -185,7 +185,7 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
  * @param {String} [opts.meterType='i64'] the register type that is used to meter. Can be `i64`, `i32`, `f64`, `f32`
  * @return {Object} the metered json
  */
-module.exports.meterJSON = (json, opts) => {
+const meterJSON = (json, opts) => {
   function findSection(module, sectionName) {
     return module.find((section) => section.name === sectionName);
   }
@@ -303,8 +303,10 @@ module.exports.meterJSON = (json, opts) => {
  * @param {String} [opts.meterType='i64'] the register type that is used to meter. Can be `i64`, `i32`, `f64`, `f32`
  * @return {Buffer}
  */
-module.exports.meterWASM = (wasm, opts = {}) => {
+const meterWASM = (wasm, opts = {}) => {
   let json = wasm2json(wasm);
   json = meterJSON(json, opts);
   return json2wasm(json);
 };
+
+module.exports = { meterWASM, meterJSON };
