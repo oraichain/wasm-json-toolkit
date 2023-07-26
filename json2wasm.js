@@ -417,16 +417,6 @@ const generateSection = function (json, stream = new WriteStream()) {
   return stream;
 };
 
-module.exports = (json, stream = new WriteStream()) => {
-  const [preamble, ...rest] = json;
-  generatePreramble(preamble, stream);
-  for (let item of rest) {
-    generateSection(item, stream);
-  }
-
-  return stream.buffer;
-};
-
 const generatePreramble = (json, stream = new WriteStream()) => {
   stream.write(json.magic);
   stream.write(json.version);
@@ -447,3 +437,15 @@ const generateOp = (json, stream = new WriteStream()) => {
   }
   return stream;
 };
+
+module.exports = (json, stream = new WriteStream()) => {
+  const [preamble, ...rest] = json;
+  generatePreramble(preamble, stream);
+  for (let item of rest) {
+    generateSection(item, stream);
+  }
+
+  return stream.buffer;
+};
+
+module.exports.SECTION_IDS = SECTION_IDS;
