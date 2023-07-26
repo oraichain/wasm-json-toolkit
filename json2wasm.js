@@ -1,70 +1,66 @@
-const Buffer = require('safe-buffer').Buffer
-const leb = require('leb128')
-const Stream = require('buffer-pipe')
-const OP_IMMEDIATES = require('./immediates.json')
-
-const _exports = module.exports = (json) => {
-  return _exports.generate(json).buffer
-}
+const unsigned = require('./unsigned');
+const signed = require('./signed');
+const { WriteStream } = require('./stream');
+const OP_IMMEDIATES = require('./immediates.json');
 
 // https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#language-types
 // All types are distinguished by a negative varint7 values that is the first
 // byte of their encoding (representing a type constructor)
-const LANGUAGE_TYPES = _exports.LANGUAGE_TYPES = {
-  'i32': 0x7f,
-  'i64': 0x7e,
-  'f32': 0x7d,
-  'f64': 0x7c,
-  'anyFunc': 0x70,
-  'func': 0x60,
-  'block_type': 0x40
-}
+const LANGUAGE_TYPES = {
+  i32: 0x7f,
+  i64: 0x7e,
+  f32: 0x7d,
+  f64: 0x7c,
+  anyFunc: 0x70,
+  func: 0x60,
+  block_type: 0x40
+};
 
 // https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#external_kind
 // A single-byte unsigned integer indicating the kind of definition being imported or defined:
-const EXTERNAL_KIND = _exports.EXTERNAL_KIND = {
-  'function': 0,
-  'table': 1,
-  'memory': 2,
-  'global': 3
-}
+const EXTERNAL_KIND = {
+  function: 0,
+  table: 1,
+  memory: 2,
+  global: 3
+};
 
-const SECTION_IDS = _exports.SECTION_IDS = {
-  'custom': 0,
-  'type': 1,
-  'import': 2,
-  'function': 3,
-  'table': 4,
-  'memory': 5,
-  'global': 6,
-  'export': 7,
-  'start': 8,
-  'element': 9,
-  'code': 10,
-  'data': 11
-}
+const SECTION_IDS = {
+  custom: 0,
+  type: 1,
+  import: 2,
+  function: 3,
+  table: 4,
+  memory: 5,
+  global: 6,
+  export: 7,
+  start: 8,
+  element: 9,
+  code: 10,
+  data: 11
+};
 
-const OPCODES = _exports.OPCODES = {
-  'unreachable': 0x0,
-  'nop': 0x1,
-  'block': 0x2,
-  'loop': 0x3,
-  'if': 0x4,
-  'else': 0x5,
-  'end': 0xb,
-  'br': 0xc,
-  'br_if': 0xd,
-  'br_table': 0xe,
-  'return': 0xf,
-  'call': 0x10,
-  'call_indirect': 0x11,
-  'drop': 0x1a,
-  'select': 0x1b,
-  'get_local': 0x20,
-  'set_local': 0x21,
-  'tee_local': 0x22,
-  'get_global': 0x23,
-  'set_global': 0x24,
+const OPCODES = {
+  unreachable: 0x0,
+  nop: 0x1,
+  block: 0x2,
+  loop: 0x3,
+  if: 0x4,
+  else: 0x5,
+  end: 0xb,
+  br: 0xc,
+  br_if: 0xd,
+  br_table: 0xe,
+  return: 0xf,
+  call: 0x10,
+  call_indirect: 0x11,
+  drop: 0x1a,
+  select: 0x1b,
+  get_local: 0x20,
+  set_local: 0x21,
+  tee_local: 0x22,
+  get_global: 0x23,
+  set_global: 0x24,
   'i32.load': 0x28,
   'i64.load': 0x29,
   'f32.load': 0x2a,
@@ -88,8 +84,8 @@ const OPCODES = _exports.OPCODES = {
   'i64.store8': 0x3c,
   'i64.store16': 0x3d,
   'i64.store32': 0x3e,
-  'current_memory': 0x3f,
-  'grow_memory': 0x40,
+  current_memory: 0x3f,
+  grow_memory: 0x40,
   'i32.const': 0x41,
   'i64.const': 0x42,
   'f32.const': 0x43,
@@ -216,23 +212,28 @@ const OPCODES = _exports.OPCODES = {
   'i32.reinterpret/f32': 0xbc,
   'i64.reinterpret/f64': 0xbd,
   'f32.reinterpret/i32': 0xbe,
-  'f64.reinterpret/i64': 0xbf
-}
+  'f64.reinterpret/i64': 0xbf,
+  'i32.extend8_s': 0xc0,
+  'i32.extend16_s': 0xc1,
+  'i64.extend8_s': 0xc2,
+  'i64.extend16_s': 0xc3,
+  'i64.extend32_s': 0xc4
+};
 
-_exports.typeGenerators = {
-  'function': (json, stream) => {
-    leb.unsigned.write(json, stream)
+const typeGenerators = {
+  function: (json, stream) => {
+    unsigned.write(json, stream);
   },
   table: (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json.elementType]])
-    _exports.typeGenerators.memory(json.limits, stream)
+    stream.write([LANGUAGE_TYPES[json.elementType]]);
+    typeGenerators.memory(json.limits, stream);
   },
   /**
    * generates a [`global_type`](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#global_type)
    */
   global: (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json.contentType]])
-    stream.write([json.mutability])
+    stream.write([LANGUAGE_TYPES[json.contentType]]);
+    stream.write([json.mutability]);
   },
   /**
    * Generates a [resizable_limits](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#resizable_limits)
@@ -240,11 +241,11 @@ _exports.typeGenerators = {
    * @param {Stream} stream
    */
   memory: (json, stream) => {
-    leb.unsigned.write(Number(json.maximum !== undefined), stream) // the flags
-    leb.unsigned.write(json.intial, stream)
+    unsigned.write(Number(json.maximum !== undefined), stream); // the flags
+    unsigned.write(json.intial, stream);
 
     if (json.maximum !== undefined) {
-      leb.unsigned.write(json.maximum, stream)
+      unsigned.write(json.maximum, stream);
     }
   },
   /**
@@ -253,198 +254,196 @@ _exports.typeGenerators = {
    * expression followed by the end opcode as a delimiter.
    */
   initExpr: (json, stream) => {
-    _exports.generateOp(json, stream)
-    _exports.generateOp({name: 'end', type: 'void'}, stream)
+    generateOp(json, stream);
+    generateOp({ name: 'end', type: 'void' }, stream);
   }
-}
+};
 
-_exports.immediataryGenerators = {
-  'varuint1': (json, stream) => {
-    stream.write([json])
-    return stream
+const immediataryGenerators = {
+  varuint1: (json, stream) => {
+    stream.write([json]);
+    return stream;
   },
-  'varuint32': (json, stream) => {
-    leb.unsigned.write(json, stream)
-    return stream
+  varuint32: (json, stream) => {
+    unsigned.write(json, stream);
+    return stream;
   },
-  'varint32': (json, stream) => {
-    leb.signed.write(json, stream)
-    return stream
+  varint32: (json, stream) => {
+    signed.write(json, stream);
+    return stream;
   },
-  'varint64': (json, stream) => {
-    leb.signed.write(json, stream)
-    return stream
+  varint64: (json, stream) => {
+    signed.write(json, stream);
+    return stream;
   },
-  'uint32': (json, stream) => {
-    stream.write(json)
-    return stream
+  uint32: (json, stream) => {
+    stream.write(json);
+    return stream;
   },
-  'uint64': (json, stream) => {
-    stream.write(json)
-    return stream
+  uint64: (json, stream) => {
+    stream.write(json);
+    return stream;
   },
-  'block_type': (json, stream) => {
-    stream.write([LANGUAGE_TYPES[json]])
-    return stream
+  block_type: (json, stream) => {
+    stream.write([LANGUAGE_TYPES[json]]);
+    return stream;
   },
-  'br_table': (json, stream) => {
-    leb.unsigned.write(json.targets.length, stream)
+  br_table: (json, stream) => {
+    unsigned.write(json.targets.length, stream);
     for (let target of json.targets) {
-      leb.unsigned.write(target, stream)
+      unsigned.write(target, stream);
     }
-    leb.unsigned.write(json.defaultTarget, stream)
-    return stream
+    unsigned.write(json.defaultTarget, stream);
+    return stream;
   },
-  'call_indirect': (json, stream) => {
-    leb.unsigned.write(json.index, stream)
-    stream.write([json.reserved])
-    return stream
+  call_indirect: (json, stream) => {
+    unsigned.write(json.index, stream);
+    stream.write([json.reserved]);
+    return stream;
   },
-  'memory_immediate': (json, stream) => {
-    leb.unsigned.write(json.flags, stream)
-    leb.unsigned.write(json.offset, stream)
+  memory_immediate: (json, stream) => {
+    unsigned.write(json.flags, stream);
+    unsigned.write(json.offset, stream);
 
-    return stream
+    return stream;
   }
-}
+};
 
 const entryGenerators = {
-  'type': (entry, stream = new Stream()) => {
+  type: (entry, stream = new WriteStream()) => {
     // a single type entry binary encoded
-    stream.write([LANGUAGE_TYPES[entry.form]]) // the form
+    stream.write([LANGUAGE_TYPES[entry.form]]); // the form
 
-    const len = entry.params.length // number of parameters
-    leb.unsigned.write(len, stream)
+    const len = entry.params.length; // number of parameters
+    unsigned.write(len, stream);
     if (len !== 0) {
-      stream.write(entry.params.map(type => LANGUAGE_TYPES[type])) // the paramter types
+      stream.write(entry.params.map((type) => LANGUAGE_TYPES[type])); // the paramter types
     }
 
-    stream.write([entry.return_type ? 1 : 0]) // number of return types
+    stream.write([entry.return_type ? 1 : 0]); // number of return types
 
     if (entry.return_type) {
-      stream.write([LANGUAGE_TYPES[entry.return_type]])
+      stream.write([LANGUAGE_TYPES[entry.return_type]]);
     }
-    return stream.buffer
+    return stream.buffer;
   },
-  'import': (entry, stream = new Stream()) => {
+  import: (entry, stream = new WriteStream()) => {
     // write the module string
-    leb.unsigned.write(entry.moduleStr.length, stream)
-    stream.write(entry.moduleStr)
+    unsigned.write(entry.moduleStr.length, stream);
+    stream.write(entry.moduleStr);
     // write the field string
-    leb.unsigned.write(entry.fieldStr.length, stream)
-    stream.write(entry.fieldStr)
-    stream.write([EXTERNAL_KIND[entry.kind]])
-    _exports.typeGenerators[entry.kind](entry.type, stream)
+    unsigned.write(entry.fieldStr.length, stream);
+    stream.write(entry.fieldStr);
+    stream.write([EXTERNAL_KIND[entry.kind]]);
+    typeGenerators[entry.kind](entry.type, stream);
   },
-  'function': (entry, stream = new Stream()) => {
-    leb.unsigned.write(entry, stream)
-    return stream.buffer
+  function: (entry, stream = new WriteStream()) => {
+    unsigned.write(entry, stream);
+    return stream.buffer;
   },
-  'table': _exports.typeGenerators.table,
-  'global': (entry, stream = new Stream()) => {
-    _exports.typeGenerators.global(entry.type, stream)
-    _exports.typeGenerators.initExpr(entry.init, stream)
-    return stream
+  table: typeGenerators.table,
+  global: (entry, stream = new WriteStream()) => {
+    typeGenerators.global(entry.type, stream);
+    typeGenerators.initExpr(entry.init, stream);
+    return stream;
   },
-  'memory': _exports.typeGenerators.memory,
-  'export': (entry, stream = new Stream()) => {
-    const fieldStr = Buffer.from(entry.field_str)
-    const strLen = fieldStr.length
-    leb.unsigned.write(strLen, stream)
-    stream.write(fieldStr)
-    stream.write([EXTERNAL_KIND[entry.kind]])
-    leb.unsigned.write(entry.index, stream)
-    return stream
+  memory: typeGenerators.memory,
+  export: (entry, stream = new WriteStream()) => {
+    const fieldStr = Buffer.from(entry.field_str);
+    const strLen = fieldStr.length;
+    unsigned.write(strLen, stream);
+    stream.write(fieldStr);
+    stream.write([EXTERNAL_KIND[entry.kind]]);
+    unsigned.write(entry.index, stream);
+    return stream;
   },
-  'element': (entry, stream = new Stream()) => {
-    leb.unsigned.write(entry.index, stream)
-    _exports.typeGenerators.initExpr(entry.offset, stream)
-    leb.unsigned.write(entry.elements.length, stream)
+  element: (entry, stream = new WriteStream()) => {
+    unsigned.write(entry.index, stream);
+    typeGenerators.initExpr(entry.offset, stream);
+    unsigned.write(entry.elements.length, stream);
     for (let elem of entry.elements) {
-      leb.unsigned.write(elem, stream)
+      unsigned.write(elem, stream);
     }
 
-    return stream
+    return stream;
   },
-  'code': (entry, stream = new Stream()) => {
-    let codeStream = new Stream()
+  code: (entry, stream = new WriteStream()) => {
+    let codeStream = new WriteStream();
     // write the locals
-    leb.unsigned.write(entry.locals.length, codeStream)
+    unsigned.write(entry.locals.length, codeStream);
     for (let local of entry.locals) {
-      leb.unsigned.write(local.count, codeStream)
-      codeStream.write([LANGUAGE_TYPES[local.type]])
+      unsigned.write(local.count, codeStream);
+      codeStream.write([LANGUAGE_TYPES[local.type]]);
     }
     // write opcode
     for (let op of entry.code) {
-      _exports.generateOp(op, codeStream)
+      generateOp(op, codeStream);
     }
 
-    leb.unsigned.write(codeStream.bytesWrote, stream)
-    stream.write(codeStream.buffer)
-    return stream
+    unsigned.write(codeStream.bytesWrote, stream);
+    stream.write(codeStream.buffer);
+    return stream;
   },
-  'data': (entry, stream = new Stream()) => {
-    leb.unsigned.write(entry.index, stream)
-    _exports.typeGenerators.initExpr(entry.offset, stream)
-    leb.unsigned.write(entry.data.length, stream)
-    stream.write(entry.data)
-    return stream
+  data: (entry, stream = new WriteStream()) => {
+    unsigned.write(entry.index, stream);
+    typeGenerators.initExpr(entry.offset, stream);
+    unsigned.write(entry.data.length, stream);
+    stream.write(entry.data);
+    return stream;
   }
-}
+};
 
-_exports.entryGenerators = entryGenerators
-
-_exports.generateSection = function (json, stream = new Stream()) {
-  const name = json.name
-  const payload = new Stream()
-  stream.write([SECTION_IDS[name]])
+const generateSection = function (json, stream = new WriteStream()) {
+  const name = json.name;
+  const payload = new WriteStream();
+  stream.write([SECTION_IDS[name]]);
 
   if (name === 'custom') {
-    leb.unsigned.write(json.sectionName.length, payload)
-    payload.write(json.sectionName)
-    payload.write(json.payload)
+    unsigned.write(json.sectionName.length, payload);
+    payload.write(json.sectionName);
+    payload.write(json.payload);
   } else if (name === 'start') {
-    leb.unsigned.write(json.index, payload)
+    unsigned.write(json.index, payload);
   } else {
-    leb.unsigned.write(json.entries.length, payload)
+    unsigned.write(json.entries.length, payload);
     for (let entry of json.entries) {
-      entryGenerators[name](entry, payload)
+      entryGenerators[name](entry, payload);
     }
   }
 
   // write the size of the payload
-  leb.unsigned.write(payload.bytesWrote, stream)
-  stream.write(payload.buffer)
-  return stream
-}
+  unsigned.write(payload.bytesWrote, stream);
+  stream.write(payload.buffer);
+  return stream;
+};
 
-_exports.generate = (json, stream = new Stream()) => {
-  const [ preamble, ...rest ] = json
-  _exports.generatePreramble(preamble, stream)
+module.exports = (json, stream = new WriteStream()) => {
+  const [preamble, ...rest] = json;
+  generatePreramble(preamble, stream);
   for (let item of rest) {
-    _exports.generateSection(item, stream)
+    generateSection(item, stream);
   }
 
-  return stream
-}
+  return stream.buffer;
+};
 
-_exports.generatePreramble = (json, stream = new Stream()) => {
-  stream.write(json.magic)
-  stream.write(json.version)
-  return stream
-}
+const generatePreramble = (json, stream = new WriteStream()) => {
+  stream.write(json.magic);
+  stream.write(json.version);
+  return stream;
+};
 
-_exports.generateOp = (json, stream = new Stream()) => {
-  let name = json.name
+const generateOp = (json, stream = new WriteStream()) => {
+  let name = json.name;
   if (json.return_type !== undefined) {
-    name = json.return_type + '.' + name
+    name = json.return_type + '.' + name;
   }
 
-  stream.write([OPCODES[name]])
+  stream.write([OPCODES[name]]);
 
-  const immediates = OP_IMMEDIATES[json.name === 'const' ? json.return_type : json.name]
+  const immediates = OP_IMMEDIATES[json.name === 'const' ? json.return_type : json.name];
   if (immediates) {
-    _exports.immediataryGenerators[immediates](json.immediates, stream)
+    immediataryGenerators[immediates](json.immediates, stream);
   }
-  return stream
-}
+  return stream;
+};

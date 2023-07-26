@@ -1,7 +1,7 @@
 {
-  "name": "wasm-json-toolkit",
-  "version": "0.2.6",
-  "description": "this convertes wasm binaries to json and json to wasm binaries",
+  "name": "warp-wasm-json-toolkit",
+  "version": "1.0.1",
+  "description": "Warp implementation of wasm-json-toolkit",
   "main": "index.js",
   "scripts": {
     "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls",
@@ -13,12 +13,10 @@
     "wasm",
     "cli"
   ],
-  "author": "mjbecze <mjbecze@gmail.com>",
+  "author": "Warp Team <dev@warp.cc>",
   "license": "MPL-2.0",
   "dependencies": {
-    "buffer-pipe": "0.0.3",
-    "leb128": "0.0.4",
-    "safe-buffer": "^5.1.2"
+    "bn.js": "^5.2.1"
   },
   "bin": {
     "wasm2json": "./bin/wasm2json",
@@ -32,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ewasm/wasm-json-toolkit.git"
+    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit.git"
   },
   "bugs": {
-    "url": "https://github.com/ewasm/wasm-json-toolkit/issues"
+    "url": "https://github.com/warp-contracts/warp-wasm-json-toolkit/issues"
   },
-  "homepage": "https://github.com/ewasm/wasm-json-toolkit",
+  "homepage": "https://github.com/warp-contracts/warp-wasm-json-toolkit",
   "standard": {
     "ignore": [
       "test/wabt"
