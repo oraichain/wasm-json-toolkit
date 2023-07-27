@@ -56,7 +56,8 @@ class WriteStream {
   }
 
   writeArray(arr) {
-    for (const byte of arr) this._buffer[this._bytesWrote++] = byte;
+    this._buffer.set(arr, this._bytesWrote);
+    this._bytesWrote += arr.length;
   }
 
   writeString(str) {
