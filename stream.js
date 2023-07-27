@@ -100,4 +100,29 @@ class WriteStream {
   }
 }
 
-module.exports = { ReadStream, WriteStream };
+class FastArray {
+  constructor(size) {
+    this._arr = new Array(size);
+    this._length = 0;
+  }
+
+  push(item) {
+    this._arr[this._length++] = item;
+  }
+
+  concat(arr) {
+    for (const item of arr) {
+      this._arr[this._length++] = item;
+    }
+  }
+
+  get buffer() {
+    return this._arr.slice(0, this._length);
+  }
+
+  get length() {
+    return this._length;
+  }
+}
+
+module.exports = { ReadStream, WriteStream, FastArray };

@@ -53,3 +53,28 @@ export class WriteStream {
    */
   get bytesWrote(): Integer;
 }
+
+export class FastArray {
+  /**
+   * Wites an item to the pipe
+   * @param {any} item
+   */
+  push(item: any): void;
+
+  /**
+   * Wites an array to the pipe
+   * @param {any[]} arr
+   */
+  concat(arr: any[]): void;
+
+  /**
+   * return the internal buffer
+   * @return {Buffer}
+   */
+  get buffer(): Buffer;
+  /**
+   * returns the number of bytes wrote to the stream
+   * @return {Integer}
+   */
+  get length(): Integer;
+}

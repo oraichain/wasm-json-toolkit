@@ -1,3 +1,4 @@
+import BN from 'bn.js';
 import { WriteStream, ReadStream } from './stream';
 
 /**
@@ -14,5 +15,5 @@ export function encode(num: string | number): Buffer;
 export function decode(buffer: Buffer): string;
 export function write(data: any, stream: WriteStream): void;
 export function writeByte(num: number, stream: WriteStream): void;
-export function read(stream: ReadStream): any;
-export function readBn(stream: ReadStream): any;
+export function read(stream: ReadStream): Buffer;
+export function readBn(stream: ReadStream): BN;

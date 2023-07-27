@@ -1,6 +1,7 @@
 const wasm2json = require('./wasm2json');
 const json2wasm = require('./json2wasm');
 const text2json = require('./text2json');
+const { FastArray } = require('./stream');
 
 const defaultCostTable = {
   start: 0,
@@ -120,27 +121,23 @@ function getCost(json, costTable = {}, defaultCost = 0) {
   return cost;
 }
 
+function remapOp(op, funcIndex) {
+  if (op.name === 'call' && op.immediates >= funcIndex) {
+    op.immediates = (++op.immediates).toString();
+  }
+}
+
+function meteringStatement(meterType, cost, meteringImportIndex) {
+  return text2json(`${meterType}.const ${cost} call ${meteringImportIndex}`);
+}
+
 // meters a single code entrie
 function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
-  function meteringStatement(cost, meteringImportIndex) {
-    return text2json(`${meterType}.const ${cost} call ${meteringImportIndex}`);
-  }
-  function remapOp(op, funcIndex) {
-    if (op.name === 'call' && op.immediates >= funcIndex) {
-      op.immediates = (++op.immediates).toString();
-    }
-  }
-  function meterTheMeteringStatement() {
-    const code = meteringStatement(0, 0);
-    // sum the operations cost
-    return code.reduce((sum, op) => sum + getCost(op.name, costTable.code), 0);
-  }
-
   // operations that can possible cause a branch
   const branchingOps = new Set(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop']);
-  const meteringOverHead = meterTheMeteringStatement();
+  const meteringOverHead = meteringStatement(meterType, 0, 0).reduce((sum, op) => sum + getCost(op.name, costTable.code), 0);
   let code = entry.code.slice();
-  let meteredCode = [];
+  const meteredCode = new FastArray(1024); // limit of wasm
 
   cost += getCost(entry.locals, costTable.local);
 
@@ -162,16 +159,16 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
     if (cost !== 0) {
       // add the cost of metering
       cost += meteringOverHead;
-      meteredCode = meteredCode.concat(meteringStatement(cost, meterFuncIndex));
+      meteredCode.concat(meteringStatement(meterType, cost, meterFuncIndex));
     }
 
     // start a new segment
-    meteredCode = meteredCode.concat(code.slice(0, i));
+    meteredCode.concat(code.slice(0, i));
     code = code.slice(i);
     cost = 0;
   }
 
-  entry.code = meteredCode;
+  entry.code = meteredCode.buffer;
   return entry;
 }
 

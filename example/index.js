@@ -3,7 +3,7 @@ const json2wasm = require('../json2wasm');
 const wasm2json = require('../wasm2json');
 const { meterJSON } = require('../metering');
 
-const wasm = fs.readFileSync('./test.wasm');
+const wasm = fs.readFileSync(process.argv[2] ?? './test.wasm');
 let start = performance.now();
 let json = wasm2json(wasm);
 console.log('wasm2json', performance.now() - start);

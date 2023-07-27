@@ -1,4 +1,5 @@
 import { WriteStream, ReadStream } from './stream';
+import BN from 'bn.js';
 
 /**
  * LEB128 encodeds an interger
@@ -12,7 +13,7 @@ export function encode(num: string | number): Buffer;
  * @return {String}
  */
 export function decode(buffer: Buffer): string;
-export function read(stream: ReadStream): any;
-export function readBn(stream: ReadStream): any;
+export function read(stream: ReadStream): Buffer;
+export function readBn(stream: ReadStream): BN;
 export function write(data: any, stream: WriteStream): void;
 export function writeByte(num: number, stream: WriteStream): void;
