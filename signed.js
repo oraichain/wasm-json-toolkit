@@ -9,16 +9,24 @@ module.exports = {
   readBn
 };
 
+/**
+ * @param {ReadStream} stream
+ * @return {string}
+ */
 function read(stream) {
   return readBn(stream).toString();
 }
 
+/**
+ * @param {ReadStream} stream
+ * @return {Bn}
+ */
 function readBn(stream) {
   const num = new Bn(0);
   let shift = 0;
   let byt;
   while (true) {
-    byt = stream.read(1)[0];
+    byt = stream.readByte();
     num.ior(new Bn(byt & 0x7f).shln(shift));
     shift += 7;
     if (byt >> 7 === 0) {

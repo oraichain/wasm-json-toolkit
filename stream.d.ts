@@ -11,6 +11,13 @@ export class ReadStream {
    * @return {Buffer}
    */
   read(num: number): Buffer;
+
+  /**
+   * readByte return byte
+   * @return {number}
+   */
+  readByte(): number;
+
   /**
    * Whether or not there is more data to read from the buffer
    * returns {Boolean}

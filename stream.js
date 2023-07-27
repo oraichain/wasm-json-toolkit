@@ -3,7 +3,7 @@ class ReadStream {
    * @param {Buffer} buf
    */
   constructor(buf) {
-    this.buffer = buf;
+    this._buffer = buf;
     this._bytesRead = 0;
   }
 
@@ -13,10 +13,15 @@ class ReadStream {
    * @return {Buffer}
    */
   read(num) {
-    const data = this.buffer.subarray(0, num);
-    this._bytesRead += num;
-    this.buffer = this.buffer.subarray(num);
-    return data;
+    return this._buffer.subarray(this._bytesRead, (this._bytesRead += num));
+  }
+
+  readByte() {
+    return this._buffer[this._bytesRead++];
+  }
+
+  get buffer() {
+    return this._buffer.subarray(this._bytesRead);
   }
 
   /**
@@ -24,7 +29,7 @@ class ReadStream {
    * returns {Boolean}
    */
   get end() {
-    return !this.buffer.length;
+    return this._bytesRead >= this._buffer.length;
   }
 
   /**
