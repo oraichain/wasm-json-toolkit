@@ -138,7 +138,7 @@ parent wasm module.
 
 wast
 
-```
+```wasm
 (module
   (func $addTwo (param i32 i32) (result i32)
     (i32.add
@@ -149,13 +149,13 @@ wast
 
 wasm
 
-```
+```javascript
 0x010661646454776f00000a09010700200020016a0b
 ```
 
 json
 
-```
+```json
 [
   {
     "name": "preramble",
