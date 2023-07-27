@@ -3,7 +3,7 @@ class ReadStream {
    * @param {Buffer} buf
    */
   constructor(buf) {
-    this._buffer = buf;
+    this._buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
     this._bytesRead = 0;
   }
 
