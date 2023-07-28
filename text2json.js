@@ -1,9 +1,10 @@
 const OP_IMMEDIATES = require('./immediates.json');
+const { ReadArray } = require('./stream');
 
 module.exports = (text) => {
   const json = [];
-  const textArray = text.split(/\s|\n/);
-  while (textArray.length) {
+  const textArray = new ReadArray(text.split(/\s|\n/));
+  while (!textArray.end) {
     const textOp = textArray.shift();
     const jsonOp = {};
 
@@ -29,29 +30,33 @@ module.exports = (text) => {
   return json;
 };
 
-function immediataryParser(type, txt) {
+/**
+ * @param {string} type
+ * @param {ReadArray} arr
+ */
+function immediataryParser(type, arr) {
   const json = {};
   switch (type) {
     case 'br_table':
       const dests = [];
 
       while (1) {
-        let dest = txt[0];
+        let dest = arr.peek();
         if (isNaN(dest)) break;
-        txt.shift();
+        arr.shift();
         dests.push(dest);
       }
 
       return dests;
     case 'call_indirect':
-      json.index = txt.shift();
+      json.index = arr.shift();
       json.reserved = 0;
       return json;
     case 'memory_immediate':
-      json.flags = txt.shift();
-      json.offset = txt.shift();
+      json.flags = arr.shift();
+      json.offset = arr.shift();
       return json;
     default:
-      return txt.shift();
+      return arr.shift();
   }
 }

@@ -100,9 +100,42 @@ class WriteStream {
   }
 }
 
-class FastArray {
+class ReadArray {
+  /**
+   * @param {Array} arr
+   */
+  constructor(arr) {
+    this._arr = arr;
+    this._ind = 0;
+  }
+
+  shift() {
+    return this._arr[this._ind++];
+  }
+
+  peek() {
+    return this._arr[this._ind];
+  }
+
+  get buffer() {
+    return this._arr;
+  }
+
+  get end() {
+    return this._ind === this._arr.length;
+  }
+}
+
+class WriteArray {
+  /**
+   * @param {number} size
+   */
   constructor(size) {
     this._arr = new Array(size);
+    this._length = 0;
+  }
+
+  reset() {
     this._length = 0;
   }
 
@@ -125,4 +158,4 @@ class FastArray {
   }
 }
 
-module.exports = { ReadStream, WriteStream, FastArray };
+module.exports = { ReadStream, WriteStream, ReadArray, WriteArray };

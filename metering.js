@@ -1,7 +1,7 @@
 const wasm2json = require('./wasm2json');
 const json2wasm = require('./json2wasm');
 const text2json = require('./text2json');
-const { FastArray } = require('./stream');
+const { WriteArray } = require('./stream');
 const defaultCostTable = require('./defaultCostTable.json');
 
 // gets the cost of an operation for entry in a section from the cost table
@@ -39,13 +39,16 @@ function meteringStatement(meterType, cost, meteringImportIndex) {
   return text2json(`${meterType}.const ${cost} call ${meteringImportIndex}`);
 }
 
+const branchingOps = new Set(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop']);
+const meteredCode = new WriteArray(1024); // limit of wasm
+
 // meters a single code entrie
 function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
   // operations that can possible cause a branch
-  const branchingOps = new Set(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop']);
   const meteringOverHead = meteringStatement(meterType, 0, 0).reduce((sum, op) => sum + getCost(op.name, costTable.code), 0);
   let code = entry.code.slice();
-  const meteredCode = new FastArray(1024); // limit of wasm
+  // using same buffer to avoid re-allocating
+  meteredCode.reset();
 
   cost += getCost(entry.locals, costTable.local);
 
@@ -80,6 +83,28 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
   return entry;
 }
 
+function findSection(module, sectionName) {
+  return module.find((section) => section.name === sectionName);
+}
+
+function createSection(module, name) {
+  const newSectionId = json2wasm.SECTION_IDS[name];
+  for (let index in module) {
+    const section = module[index];
+    const sectionId = json2wasm.SECTION_IDS[section.name];
+    if (sectionId) {
+      if (newSectionId < sectionId) {
+        // inject a new section
+        module.splice(index, 0, {
+          name,
+          entries: []
+        });
+        return;
+      }
+    }
+  }
+}
+
 /**
  * Injects metering into a JSON output of [wasm2json](https://github.com/ewasm/wasm-json-toolkit#wasm2json)
  * @param {Object} json the json tobe metered
@@ -91,38 +116,10 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
  * @return {Object} the metered json
  */
 const meterJSON = (json, opts) => {
-  function findSection(module, sectionName) {
-    return module.find((section) => section.name === sectionName);
-  }
-
-  function createSection(module, name) {
-    const newSectionId = json2wasm.SECTION_IDS[name];
-    for (let index in module) {
-      const section = module[index];
-      const sectionId = json2wasm.SECTION_IDS[section.name];
-      if (sectionId) {
-        if (newSectionId < sectionId) {
-          // inject a new section
-          module.splice(index, 0, {
-            name,
-            entries: []
-          });
-          return;
-        }
-      }
-    }
-  }
-
   let funcIndex = 0;
   let functionModule, typeModule;
 
-  let { costTable, moduleStr, fieldStr, meterType } = opts;
-
-  // set defaults
-  if (!costTable) costTable = defaultCostTable;
-  if (!moduleStr) moduleStr = 'metering';
-  if (!fieldStr) fieldStr = 'usegas';
-  if (!meterType) meterType = 'i32';
+  const { costTable = defaultCostTable, moduleStr = 'metering', fieldStr = 'usegas', meterType = 'i32' } = opts;
 
   // add nessicarry sections iff they don't exist
   if (!findSection(json, 'type')) createSection(json, 'type');
@@ -188,7 +185,6 @@ const meterJSON = (json, opts) => {
           const typeIndex = functionModule.entries[i];
           const type = typeModule.entries[typeIndex];
           const cost = getCost(type, costTable.type);
-
           meterCodeEntry(entry, costTable.code, funcIndex, meterType, cost);
         }
         break;

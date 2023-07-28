@@ -34,7 +34,7 @@ export class WriteStream {
    * Creates a new instance of a pipe
    * @param {number | Buffer} sizeOfBuffer - an optional buffer to start with, default is 1000kb = 2 * maximum contract size
    */
-  constructor(sizeOfBuffer?: number | Buffer);
+  constructor(sizeOfBuffer: number | Buffer);
   _buffer: any;
   _bytesWrote: number;
   /**
@@ -54,7 +54,28 @@ export class WriteStream {
   get bytesWrote(): Integer;
 }
 
-export class FastArray {
+export class ReadArray {
+  /**
+   * @param {Array} arr
+   */
+  constructor(arr: Array);
+  _ind: number;
+  _arr: Array;
+
+  peek(): any;
+  get end(): boolean;
+  shift(): any;
+}
+
+export class WriteArray {
+  /**
+   * @param {number} size
+   */
+  constructor(size: number);
+  _length: number;
+
+  reset(): void;
+
   /**
    * Wites an item to the pipe
    * @param {any} item
