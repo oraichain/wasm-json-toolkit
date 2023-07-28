@@ -1,4 +1,4 @@
-const immediates = require('./immediates.json');
+const OP_IMMEDIATES = require('./immediates.json');
 
 module.exports = (text) => {
   const json = [];
@@ -17,7 +17,7 @@ module.exports = (text) => {
 
     jsonOp.name = name;
 
-    const immediate = immediates[jsonOp.name === 'const' ? jsonOp.return_type : jsonOp.name];
+    const immediate = OP_IMMEDIATES[jsonOp.name === 'const' ? jsonOp.return_type : jsonOp.name];
 
     if (immediate) {
       jsonOp.immediates = immediataryParser(immediate, textArray);
