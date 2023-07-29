@@ -55,16 +55,11 @@ function write(number, stream) {
   while (true) {
     const i = num.maskn(7).toNumber();
     num.ishrn(7);
-    if ((isNegOne(num) && (i & 0x40) !== 0) || (num.isZero() && (i & 0x40) === 0)) {
+    if ((isNeg && num.toString(2).indexOf('0') < 0 && (i & 0x40) !== 0) || (num.isZero() && (i & 0x40) === 0)) {
       stream.writeByte(i);
       break;
-    } else {
-      stream.writeByte(i | 0x80);
     }
-  }
-
-  function isNegOne(num) {
-    return isNeg && num.toString(2).indexOf('0') < 0;
+    stream.writeByte(i | 0x80);
   }
 }
 

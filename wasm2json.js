@@ -268,7 +268,7 @@ const immediataryParsers = {
     return int32;
   },
   varint32: (stream) => {
-    const int32 = signed.read(stream);
+    const int32 = signed.readBn(stream).toNumber();
     return int32;
   },
   varint64: (stream) => {

@@ -13,6 +13,5 @@ export function encode(num: string | number): Buffer;
  * @return {String}
  */
 export function decode(buffer: Buffer): string;
-export function read(stream: ReadStream): Buffer;
-export function write(data: any, stream: WriteStream): void;
-export function writeByte(num: number, stream: WriteStream): void;
+export function read(stream: ReadStream): number;
+export function write(num: number, stream: WriteStream): void;
