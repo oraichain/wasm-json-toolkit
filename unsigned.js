@@ -1,40 +1,33 @@
-const Bn = require('bn.js');
 const { ReadStream, WriteStream } = require('./stream');
+
+const LOWER_7 = 0b01111111;
+const UPPER_1 = 0b10000000;
 
 module.exports = {
   encode,
   decode,
   read,
-  readBn,
+  // readBn,
   write
 };
 
 /**
  * @param {ReadStream} stream
- * @return {string}
+ * @return {number}
  */
 function read(stream) {
-  return readBn(stream).toString();
-}
+  let count = 0;
+  // find null byte to read reversed
+  while (stream.peek(count++) & UPPER_1);
 
-/**
- * @param {ReadStream} stream
- * @return {Bn}
- */
-function readBn(stream) {
-  const num = new Bn(0);
-  let shift = 0;
-  let byt;
-  while (true) {
-    byt = stream.readByte();
-    num.ior(new Bn(byt & 0x7f).shln(shift));
-    if (byt >> 7 === 0) {
-      break;
-    } else {
-      shift += 7;
-    }
+  let result = 0,
+    shift = 0;
+  while (count--) {
+    const a = stream.readByte() & LOWER_7; /* masking, we only care about lower 7 bits */
+    result |= a << shift; /* shift this value left and add it */
+    shift += 8 - 1;
   }
-  return num;
+  return result;
 }
 
 /**
@@ -45,11 +38,11 @@ function readBn(stream) {
 function write(number, stream) {
   let a = number;
   do {
-    let byte = a & 0b01111111;
+    let byte = a & LOWER_7;
     // we only care about lower 7 bits
     a >>= 8 - 1;
     // shift
-    if (a) byte = byte | 0b10000000; /* if remaining is truthy (!= 0), set highest bit */
+    if (a) byte = byte | UPPER_1; /* if remaining is truthy (!= 0), set highest bit */
     stream.writeByte(byte);
   } while (a);
 }

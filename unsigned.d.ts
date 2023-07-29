@@ -14,6 +14,5 @@ export function encode(num: string | number): Buffer;
  */
 export function decode(buffer: Buffer): string;
 export function read(stream: ReadStream): Buffer;
-export function readBn(stream: ReadStream): BN;
 export function write(data: any, stream: WriteStream): void;
 export function writeByte(num: number, stream: WriteStream): void;

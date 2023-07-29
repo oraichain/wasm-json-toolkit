@@ -16,6 +16,10 @@ class ReadStream {
     return this._buffer.subarray(this._bytesRead, (this._bytesRead += num));
   }
 
+  peek(ind) {
+    return this._buffer[this._bytesRead + ind];
+  }
+
   readByte() {
     return this._buffer[this._bytesRead++];
   }

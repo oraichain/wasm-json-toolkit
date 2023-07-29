@@ -35,7 +35,7 @@ const parsePreramble = (stream) => {
 
 const parseSectionHeader = (stream) => {
   const id = stream.readByte();
-  const size = unsigned.readBn(stream).toNumber();
+  const size = unsigned.read(stream);
   return {
     id,
     name: SECTION_IDS[id],
@@ -289,31 +289,31 @@ const immediataryParsers = {
     const json = {
       targets: []
     };
-    const num = unsigned.readBn(stream).toNumber();
+    const num = unsigned.read(stream);
     for (let i = 0; i < num; i++) {
-      const target = unsigned.readBn(stream).toNumber();
+      const target = unsigned.read(stream);
       json.targets.push(target);
     }
-    json.defaultTarget = unsigned.readBn(stream).toNumber();
+    json.defaultTarget = unsigned.read(stream);
     return json;
   },
   call_indirect: (stream) => {
     const json = {};
-    json.index = unsigned.readBn(stream).toNumber();
+    json.index = unsigned.read(stream);
     json.reserved = stream.readByte();
     return json;
   },
   memory_immediate: (stream) => {
     const json = {};
-    json.flags = unsigned.readBn(stream).toNumber();
-    json.offset = unsigned.readBn(stream).toNumber();
+    json.flags = unsigned.read(stream);
+    json.offset = unsigned.read(stream);
     return json;
   }
 };
 
 const typeParsers = {
   function: (stream) => {
-    return unsigned.readBn(stream).toNumber();
+    return unsigned.read(stream);
   },
   table: (stream) => {
     const entry = {};
@@ -341,10 +341,10 @@ const typeParsers = {
    */
   memory: (stream) => {
     const limits = {};
-    limits.flags = unsigned.readBn(stream).toNumber();
-    limits.intial = unsigned.readBn(stream).toNumber();
+    limits.flags = unsigned.read(stream);
+    limits.intial = unsigned.read(stream);
     if (limits.flags === 1) {
-      limits.maximum = unsigned.readBn(stream).toNumber();
+      limits.maximum = unsigned.read(stream);
     }
     return limits;
   },
@@ -373,7 +373,7 @@ const sectionParsers = {
     return json;
   },
   type: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'type',
       entries: []
@@ -386,14 +386,14 @@ const sectionParsers = {
         params: []
       };
 
-      const paramCount = unsigned.readBn(stream).toNumber();
+      const paramCount = unsigned.read(stream);
 
       // parse the entries
       for (let q = 0; q < paramCount; q++) {
         const type = stream.readByte();
         entry.params.push(LANGUAGE_TYPES[type]);
       }
-      const numOfReturns = unsigned.readBn(stream).toNumber();
+      const numOfReturns = unsigned.read(stream);
       if (numOfReturns) {
         type = stream.readByte();
         entry.return_type = LANGUAGE_TYPES[type];
@@ -404,7 +404,7 @@ const sectionParsers = {
     return json;
   },
   import: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'import',
       entries: []
@@ -412,10 +412,10 @@ const sectionParsers = {
 
     for (let i = 0; i < numberOfEntries; i++) {
       const entry = {};
-      const moduleLen = unsigned.readBn(stream).toNumber();
+      const moduleLen = unsigned.read(stream);
       entry.moduleStr = stream.read(moduleLen).toString();
 
-      const fieldLen = unsigned.readBn(stream).toNumber();
+      const fieldLen = unsigned.read(stream);
       entry.fieldStr = stream.read(fieldLen).toString();
       const kind = stream.readByte(); // read single byte
       entry.kind = EXTERNAL_KIND[kind];
@@ -426,20 +426,20 @@ const sectionParsers = {
     return json;
   },
   function: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'function',
       entries: []
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = unsigned.readBn(stream).toNumber();
+      const entry = unsigned.read(stream);
       json.entries.push(entry);
     }
     return json;
   },
   table: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'table',
       entries: []
@@ -453,7 +453,7 @@ const sectionParsers = {
     return json;
   },
   memory: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'memory',
       entries: []
@@ -466,7 +466,7 @@ const sectionParsers = {
     return json;
   },
   global: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'global',
       entries: []
@@ -482,19 +482,19 @@ const sectionParsers = {
     return json;
   },
   export: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'export',
       entries: []
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const strLength = unsigned.readBn(stream).toNumber();
+      const strLength = unsigned.read(stream);
       const entry = {};
       entry.field_str = stream.read(strLength).toString();
       const kind = stream.readByte();
       entry.kind = EXTERNAL_KIND[kind];
-      entry.index = unsigned.readBn(stream).toNumber();
+      entry.index = unsigned.read(stream);
       json.entries.push(entry);
     }
     return json;
@@ -504,11 +504,11 @@ const sectionParsers = {
       name: 'start'
     };
 
-    json.index = unsigned.readBn(stream).toNumber();
+    json.index = unsigned.read(stream);
     return json;
   },
   element: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'element',
       entries: []
@@ -519,11 +519,11 @@ const sectionParsers = {
         elements: []
       };
 
-      entry.index = unsigned.readBn(stream).toNumber();
+      entry.index = unsigned.read(stream);
       entry.offset = typeParsers.initExpr(stream);
-      const numElem = unsigned.readBn(stream).toNumber();
+      const numElem = unsigned.read(stream);
       for (let i = 0; i < numElem; i++) {
-        const elem = unsigned.readBn(stream).toNumber();
+        const elem = unsigned.read(stream);
         entry.elements.push(elem);
       }
 
@@ -532,7 +532,7 @@ const sectionParsers = {
     return json;
   },
   code: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'code',
       entries: []
@@ -544,14 +544,14 @@ const sectionParsers = {
         code: []
       };
 
-      let bodySize = unsigned.readBn(stream).toNumber();
+      let bodySize = unsigned.read(stream);
       const endBytes = stream.bytesRead + bodySize;
       // parse locals
-      const localCount = unsigned.readBn(stream).toNumber();
+      const localCount = unsigned.read(stream);
 
       for (let q = 0; q < localCount; q++) {
         const local = {};
-        local.count = unsigned.readBn(stream).toNumber();
+        local.count = unsigned.read(stream);
         const type = stream.readByte();
         local.type = LANGUAGE_TYPES[type];
         codeBody.locals.push(local);
@@ -568,7 +568,7 @@ const sectionParsers = {
     return json;
   },
   data: (stream) => {
-    const numberOfEntries = unsigned.readBn(stream).toNumber();
+    const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'data',
       entries: []
@@ -576,9 +576,9 @@ const sectionParsers = {
 
     for (let i = 0; i < numberOfEntries; i++) {
       const entry = {};
-      entry.index = unsigned.readBn(stream).toNumber();
+      entry.index = unsigned.read(stream);
       entry.offset = typeParsers.initExpr(stream);
-      const segmentSize = unsigned.readBn(stream).toNumber();
+      const segmentSize = unsigned.read(stream);
       entry.data = [...stream.read(segmentSize)];
 
       json.entries.push(entry);

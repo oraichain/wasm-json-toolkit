@@ -18,6 +18,8 @@ export class ReadStream {
    */
   readByte(): number;
 
+  peek(ind: number): number;
+
   /**
    * Whether or not there is more data to read from the buffer
    * returns {Boolean}
