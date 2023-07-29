@@ -18,19 +18,12 @@ const LANGUAGE_TYPES = {
 
 // https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#external_kind
 // A single-byte unsigned integer indicating the kind of definition being imported or defined:
-const EXTERNAL_KIND = {
-  0: 'function',
-  1: 'table',
-  2: 'memory',
-  3: 'global'
-};
+const EXTERNAL_KIND = ['function', 'table', 'memory', 'global'];
 
 const parsePreramble = (stream) => {
-  const obj = {};
-  obj.name = 'preramble';
-  obj.magic = [...stream.read(4)];
-  obj.version = [...stream.read(4)];
-  return obj;
+  const magic = [...stream.read(4)];
+  const version = [...stream.read(4)];
+  return { name: 'preramble', magic, version };
 };
 
 const parseSectionHeader = (stream) => {
@@ -43,221 +36,207 @@ const parseSectionHeader = (stream) => {
   };
 };
 
-const OPCODES = {
-  // flow control
-  0x0: 'unreachable',
-  0x1: 'nop',
-  0x2: 'block',
-  0x3: 'loop',
-  0x4: 'if',
-  0x5: 'else',
-  0xb: 'end',
-  0xc: 'br',
-  0xd: 'br_if',
-  0xe: 'br_table',
-  0xf: 'return',
+const OPCODES = [
+  'unreachable',
+  'nop',
+  'block',
+  'loop',
+  'if',
+  'else',
+  '',
+  '',
+  '',
+  '',
+  '',
+  'end',
+  'br',
+  'br_if',
+  'br_table',
+  'return',
+  'call',
+  'call_indirect',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  'drop',
+  'select',
+  '',
+  '',
+  '',
+  '',
+  'get_local',
+  'set_local',
+  'tee_local',
+  'get_global',
+  'set_global',
+  '',
+  '',
+  '',
+  'i32.load',
+  'i64.load',
+  'f32.load',
+  'f64.load',
+  'i32.load8_s',
+  'i32.load8_u',
+  'i32.load16_s',
+  'i32.load16_u',
+  'i64.load8_s',
+  'i64.load8_u',
+  'i64.load16_s',
+  'i64.load16_u',
+  'i64.load32_s',
+  'i64.load32_u',
+  'i32.store',
+  'i64.store',
+  'f32.store',
+  'f64.store',
+  'i32.store8',
+  'i32.store16',
+  'i64.store8',
+  'i64.store16',
+  'i64.store32',
+  'current_memory',
+  'grow_memory',
+  'i32.const',
+  'i64.const',
+  'f32.const',
+  'f64.const',
+  'i32.eqz',
+  'i32.eq',
+  'i32.ne',
+  'i32.lt_s',
+  'i32.lt_u',
+  'i32.gt_s',
+  'i32.gt_u',
+  'i32.le_s',
+  'i32.le_u',
+  'i32.ge_s',
+  'i32.ge_u',
+  'i64.eqz',
+  'i64.eq',
+  'i64.ne',
+  'i64.lt_s',
+  'i64.lt_u',
+  'i64.gt_s',
+  'i64.gt_u',
+  'i64.le_s',
+  'i64.le_u',
+  'i64.ge_s',
+  'i64.ge_u',
+  'f32.eq',
+  'f32.ne',
+  'f32.lt',
+  'f32.gt',
+  'f32.le',
+  'f32.ge',
+  'f64.eq',
+  'f64.ne',
+  'f64.lt',
+  'f64.gt',
+  'f64.le',
+  'f64.ge',
+  'i32.clz',
+  'i32.ctz',
+  'i32.popcnt',
+  'i32.add',
+  'i32.sub',
+  'i32.mul',
+  'i32.div_s',
+  'i32.div_u',
+  'i32.rem_s',
+  'i32.rem_u',
+  'i32.and',
+  'i32.or',
+  'i32.xor',
+  'i32.shl',
+  'i32.shr_s',
+  'i32.shr_u',
+  'i32.rotl',
+  'i32.rotr',
+  'i64.clz',
+  'i64.ctz',
+  'i64.popcnt',
+  'i64.add',
+  'i64.sub',
+  'i64.mul',
+  'i64.div_s',
+  'i64.div_u',
+  'i64.rem_s',
+  'i64.rem_u',
+  'i64.and',
+  'i64.or',
+  'i64.xor',
+  'i64.shl',
+  'i64.shr_s',
+  'i64.shr_u',
+  'i64.rotl',
+  'i64.rotr',
+  'f32.abs',
+  'f32.neg',
+  'f32.ceil',
+  'f32.floor',
+  'f32.trunc',
+  'f32.nearest',
+  'f32.sqrt',
+  'f32.add',
+  'f32.sub',
+  'f32.mul',
+  'f32.div',
+  'f32.min',
+  'f32.max',
+  'f32.copysign',
+  'f64.abs',
+  'f64.neg',
+  'f64.ceil',
+  'f64.floor',
+  'f64.trunc',
+  'f64.nearest',
+  'f64.sqrt',
+  'f64.add',
+  'f64.sub',
+  'f64.mul',
+  'f64.div',
+  'f64.min',
+  'f64.max',
+  'f64.copysign',
+  'i32.wrap/i64',
+  'i32.trunc_s/f32',
+  'i32.trunc_u/f32',
+  'i32.trunc_s/f64',
+  'i32.trunc_u/f64',
+  'i64.extend_s/i32',
+  'i64.extend_u/i32',
+  'i64.trunc_s/f32',
+  'i64.trunc_u/f32',
+  'i64.trunc_s/f64',
+  'i64.trunc_u/f64',
+  'f32.convert_s/i32',
+  'f32.convert_u/i32',
+  'f32.convert_s/i64',
+  'f32.convert_u/i64',
+  'f32.demote/f64',
+  'f64.convert_s/i32',
+  'f64.convert_u/i32',
+  'f64.convert_s/i64',
+  'f64.convert_u/i64',
+  'f64.promote/f32',
+  'i32.reinterpret/f32',
+  'i64.reinterpret/f64',
+  'f32.reinterpret/i32',
+  'f64.reinterpret/i64',
+  'i32.extend8_s',
+  'i32.extend16_s',
+  'i64.extend8_s',
+  'i64.extend16_s',
+  'i64.extend32_s'
+];
 
-  // calls
-  0x10: 'call',
-  0x11: 'call_indirect',
-
-  // Parametric operators
-  0x1a: 'drop',
-  0x1b: 'select',
-
-  // Varibale access
-  0x20: 'get_local',
-  0x21: 'set_local',
-  0x22: 'tee_local',
-  0x23: 'get_global',
-  0x24: 'set_global',
-
-  // Memory-related operators
-  0x28: 'i32.load',
-  0x29: 'i64.load',
-  0x2a: 'f32.load',
-  0x2b: 'f64.load',
-  0x2c: 'i32.load8_s',
-  0x2d: 'i32.load8_u',
-  0x2e: 'i32.load16_s',
-  0x2f: 'i32.load16_u',
-  0x30: 'i64.load8_s',
-  0x31: 'i64.load8_u',
-  0x32: 'i64.load16_s',
-  0x33: 'i64.load16_u',
-  0x34: 'i64.load32_s',
-  0x35: 'i64.load32_u',
-  0x36: 'i32.store',
-  0x37: 'i64.store',
-  0x38: 'f32.store',
-  0x39: 'f64.store',
-  0x3a: 'i32.store8',
-  0x3b: 'i32.store16',
-  0x3c: 'i64.store8',
-  0x3d: 'i64.store16',
-  0x3e: 'i64.store32',
-  0x3f: 'current_memory',
-  0x40: 'grow_memory',
-
-  // Constants
-  0x41: 'i32.const',
-  0x42: 'i64.const',
-  0x43: 'f32.const',
-  0x44: 'f64.const',
-
-  // Comparison operators
-  0x45: 'i32.eqz',
-  0x46: 'i32.eq',
-  0x47: 'i32.ne',
-  0x48: 'i32.lt_s',
-  0x49: 'i32.lt_u',
-  0x4a: 'i32.gt_s',
-  0x4b: 'i32.gt_u',
-  0x4c: 'i32.le_s',
-  0x4d: 'i32.le_u',
-  0x4e: 'i32.ge_s',
-  0x4f: 'i32.ge_u',
-  0x50: 'i64.eqz',
-  0x51: 'i64.eq',
-  0x52: 'i64.ne',
-  0x53: 'i64.lt_s',
-  0x54: 'i64.lt_u',
-  0x55: 'i64.gt_s',
-  0x56: 'i64.gt_u',
-  0x57: 'i64.le_s',
-  0x58: 'i64.le_u',
-  0x59: 'i64.ge_s',
-  0x5a: 'i64.ge_u',
-  0x5b: 'f32.eq',
-  0x5c: 'f32.ne',
-  0x5d: 'f32.lt',
-  0x5e: 'f32.gt',
-  0x5f: 'f32.le',
-  0x60: 'f32.ge',
-  0x61: 'f64.eq',
-  0x62: 'f64.ne',
-  0x63: 'f64.lt',
-  0x64: 'f64.gt',
-  0x65: 'f64.le',
-  0x66: 'f64.ge',
-
-  // Numeric operators
-  0x67: 'i32.clz',
-  0x68: 'i32.ctz',
-  0x69: 'i32.popcnt',
-  0x6a: 'i32.add',
-  0x6b: 'i32.sub',
-  0x6c: 'i32.mul',
-  0x6d: 'i32.div_s',
-  0x6e: 'i32.div_u',
-  0x6f: 'i32.rem_s',
-  0x70: 'i32.rem_u',
-  0x71: 'i32.and',
-  0x72: 'i32.or',
-  0x73: 'i32.xor',
-  0x74: 'i32.shl',
-  0x75: 'i32.shr_s',
-  0x76: 'i32.shr_u',
-  0x77: 'i32.rotl',
-  0x78: 'i32.rotr',
-  0x79: 'i64.clz',
-  0x7a: 'i64.ctz',
-  0x7b: 'i64.popcnt',
-  0x7c: 'i64.add',
-  0x7d: 'i64.sub',
-  0x7e: 'i64.mul',
-  0x7f: 'i64.div_s',
-  0x80: 'i64.div_u',
-  0x81: 'i64.rem_s',
-  0x82: 'i64.rem_u',
-  0x83: 'i64.and',
-  0x84: 'i64.or',
-  0x85: 'i64.xor',
-  0x86: 'i64.shl',
-  0x87: 'i64.shr_s',
-  0x88: 'i64.shr_u',
-  0x89: 'i64.rotl',
-  0x8a: 'i64.rotr',
-  0x8b: 'f32.abs',
-  0x8c: 'f32.neg',
-  0x8d: 'f32.ceil',
-  0x8e: 'f32.floor',
-  0x8f: 'f32.trunc',
-  0x90: 'f32.nearest',
-  0x91: 'f32.sqrt',
-  0x92: 'f32.add',
-  0x93: 'f32.sub',
-  0x94: 'f32.mul',
-  0x95: 'f32.div',
-  0x96: 'f32.min',
-  0x97: 'f32.max',
-  0x98: 'f32.copysign',
-  0x99: 'f64.abs',
-  0x9a: 'f64.neg',
-  0x9b: 'f64.ceil',
-  0x9c: 'f64.floor',
-  0x9d: 'f64.trunc',
-  0x9e: 'f64.nearest',
-  0x9f: 'f64.sqrt',
-  0xa0: 'f64.add',
-  0xa1: 'f64.sub',
-  0xa2: 'f64.mul',
-  0xa3: 'f64.div',
-  0xa4: 'f64.min',
-  0xa5: 'f64.max',
-  0xa6: 'f64.copysign',
-
-  // Conversions
-  0xa7: 'i32.wrap/i64',
-  0xa8: 'i32.trunc_s/f32',
-  0xa9: 'i32.trunc_u/f32',
-  0xaa: 'i32.trunc_s/f64',
-  0xab: 'i32.trunc_u/f64',
-  0xac: 'i64.extend_s/i32',
-  0xad: 'i64.extend_u/i32',
-  0xae: 'i64.trunc_s/f32',
-  0xaf: 'i64.trunc_u/f32',
-  0xb0: 'i64.trunc_s/f64',
-  0xb1: 'i64.trunc_u/f64',
-  0xb2: 'f32.convert_s/i32',
-  0xb3: 'f32.convert_u/i32',
-  0xb4: 'f32.convert_s/i64',
-  0xb5: 'f32.convert_u/i64',
-  0xb6: 'f32.demote/f64',
-  0xb7: 'f64.convert_s/i32',
-  0xb8: 'f64.convert_u/i32',
-  0xb9: 'f64.convert_s/i64',
-  0xba: 'f64.convert_u/i64',
-  0xbb: 'f64.promote/f32',
-
-  // Reinterpretations
-  0xbc: 'i32.reinterpret/f32',
-  0xbd: 'i64.reinterpret/f64',
-  0xbe: 'f32.reinterpret/i32',
-  0xbf: 'f64.reinterpret/i64',
-
-  // Narrow-Width Integer Sign Extension
-  0xc0: 'i32.extend8_s',
-  0xc1: 'i32.extend16_s',
-  0xc2: 'i64.extend8_s',
-  0xc3: 'i64.extend16_s',
-  0xc4: 'i64.extend32_s'
-};
-
-const SECTION_IDS = {
-  0: 'custom',
-  1: 'type',
-  2: 'import',
-  3: 'function',
-  4: 'table',
-  5: 'memory',
-  6: 'global',
-  7: 'export',
-  8: 'start',
-  9: 'element',
-  10: 'code',
-  11: 'data'
-};
+const SECTION_IDS = ['custom', 'type', 'import', 'function', 'table', 'memory', 'global', 'export', 'start', 'element', 'code', 'data'];
 
 const immediataryParsers = {
   varuint1: (stream) => {
@@ -286,16 +265,17 @@ const immediataryParsers = {
     return LANGUAGE_TYPES[type];
   },
   br_table: (stream) => {
-    const json = {
-      targets: []
-    };
     const num = unsigned.read(stream);
+    const targets = new Array(num);
+
     for (let i = 0; i < num; i++) {
-      const target = unsigned.read(stream);
-      json.targets.push(target);
+      targets[i] = unsigned.read(stream);
     }
-    json.defaultTarget = unsigned.read(stream);
-    return json;
+    const defaultTarget = unsigned.read(stream);
+    return {
+      targets,
+      defaultTarget
+    };
   },
   call_indirect: (stream) => {
     const json = {};
@@ -366,7 +346,7 @@ const sectionParsers = {
       name: 'custom'
     };
     const section = new ReadStream(stream.read(header.size));
-    const nameLen = unsigned.readBn(section).toNumber();
+    const nameLen = unsigned.read(section);
     const name = section.read(nameLen);
     json.sectionName = name.toString();
     json.payload = [...section.buffer];
@@ -376,30 +356,31 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'type',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
       let type = stream.readByte();
-      const entry = {
-        form: LANGUAGE_TYPES[type],
-        params: []
-      };
 
       const paramCount = unsigned.read(stream);
 
+      const entry = {
+        form: LANGUAGE_TYPES[type],
+        params: new Array(paramCount)
+      };
+
       // parse the entries
       for (let q = 0; q < paramCount; q++) {
-        const type = stream.readByte();
-        entry.params.push(LANGUAGE_TYPES[type]);
+        entry.params[q] = LANGUAGE_TYPES[stream.readByte()];
       }
+
       const numOfReturns = unsigned.read(stream);
       if (numOfReturns) {
         type = stream.readByte();
         entry.return_type = LANGUAGE_TYPES[type];
       }
 
-      json.entries.push(entry);
+      json.entries[i] = entry;
     }
     return json;
   },
@@ -407,7 +388,7 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'import',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
@@ -421,7 +402,7 @@ const sectionParsers = {
       entry.kind = EXTERNAL_KIND[kind];
       entry.type = typeParsers[entry.kind](stream);
 
-      json.entries.push(entry);
+      json.entries[i] = entry;
     }
     return json;
   },
@@ -429,12 +410,11 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'function',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = unsigned.read(stream);
-      json.entries.push(entry);
+      json.entries[i] = unsigned.read(stream);
     }
     return json;
   },
@@ -442,13 +422,12 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'table',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     // parse table_type
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = typeParsers.table(stream);
-      json.entries.push(entry);
+      json.entries[i] = typeParsers.table(stream);
     }
     return json;
   },
@@ -456,12 +435,11 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'memory',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = typeParsers.memory(stream);
-      json.entries.push(entry);
+      json.entries[i] = typeParsers.memory(stream);
     }
     return json;
   },
@@ -469,7 +447,7 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'global',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
@@ -477,7 +455,7 @@ const sectionParsers = {
       entry.type = typeParsers.global(stream);
       entry.init = typeParsers.initExpr(stream);
 
-      json.entries.push(entry);
+      json.entries[i] = entry;
     }
     return json;
   },
@@ -485,7 +463,7 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'export',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
@@ -495,39 +473,37 @@ const sectionParsers = {
       const kind = stream.readByte();
       entry.kind = EXTERNAL_KIND[kind];
       entry.index = unsigned.read(stream);
-      json.entries.push(entry);
+      json.entries[i] = entry;
     }
     return json;
   },
   start: (stream) => {
-    const json = {
-      name: 'start'
+    const index = unsigned.read(stream);
+    return {
+      name: 'start',
+      index
     };
-
-    json.index = unsigned.read(stream);
-    return json;
   },
   element: (stream) => {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'element',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const entry = {
-        elements: []
-      };
-
-      entry.index = unsigned.read(stream);
-      entry.offset = typeParsers.initExpr(stream);
+      const index = unsigned.read(stream);
+      const offset = typeParsers.initExpr(stream);
       const numElem = unsigned.read(stream);
-      for (let i = 0; i < numElem; i++) {
+
+      const elements = new Array(numElem);
+
+      for (let j = 0; j < numElem; j++) {
         const elem = unsigned.read(stream);
-        entry.elements.push(elem);
+        elements[j] = elem;
       }
 
-      json.entries.push(entry);
+      json.entries[i] = { index, offset, elements };
     }
     return json;
   },
@@ -535,26 +511,26 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'code',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
-      const codeBody = {
-        locals: [],
-        code: []
-      };
-
       let bodySize = unsigned.read(stream);
       const endBytes = stream.bytesRead + bodySize;
       // parse locals
       const localCount = unsigned.read(stream);
+
+      const codeBody = {
+        locals: new Array(localCount),
+        code: []
+      };
 
       for (let q = 0; q < localCount; q++) {
         const local = {};
         local.count = unsigned.read(stream);
         const type = stream.readByte();
         local.type = LANGUAGE_TYPES[type];
-        codeBody.locals.push(local);
+        codeBody.locals[q] = local;
       }
 
       // parse code
@@ -563,7 +539,7 @@ const sectionParsers = {
         codeBody.code.push(op);
       }
 
-      json.entries.push(codeBody);
+      json.entries[i] = codeBody;
     }
     return json;
   },
@@ -571,7 +547,7 @@ const sectionParsers = {
     const numberOfEntries = unsigned.read(stream);
     const json = {
       name: 'data',
-      entries: []
+      entries: new Array(numberOfEntries)
     };
 
     for (let i = 0; i < numberOfEntries; i++) {
@@ -581,7 +557,7 @@ const sectionParsers = {
       const segmentSize = unsigned.read(stream);
       entry.data = [...stream.read(segmentSize)];
 
-      json.entries.push(entry);
+      json.entries[i] = entry;
     }
     return json;
   }
