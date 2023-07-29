@@ -35,29 +35,35 @@ function remapOp(op, funcIndex) {
   }
 }
 
+const meteringCache = new Map();
 function meteringStatement(meterType, cost, meteringImportIndex) {
-  return text2json(`${meterType}.const ${cost} call ${meteringImportIndex}`);
+  const key = `${meterType}.const ${cost} call ${meteringImportIndex}`;
+  if (!meteringCache.has(key)) {
+    meteringCache.set(key, text2json(key));
+  }
+  return meteringCache.get(key);
 }
 
 const branchingOps = new Set(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop']);
-const meteredCode = new WriteArray(1024); // limit of wasm
+const meteredCode = new WriteArray(100_000); // limit of wasm
 
 // meters a single code entrie
 function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
   // operations that can possible cause a branch
   const meteringOverHead = meteringStatement(meterType, 0, 0).reduce((sum, op) => sum + getCost(op.name, costTable.code), 0);
-  let code = entry.code.slice();
+
   // using same buffer to avoid re-allocating
   meteredCode.reset();
 
   cost += getCost(entry.locals, costTable.local);
 
-  while (code.length) {
-    let i = 0;
+  let start = 0;
+  while (start < entry.code.length) {
+    let i = start;
 
     // meters a segment of wasm code
     while (true) {
-      const op = code[i++];
+      const op = entry.code[i++];
       remapOp(op, meterFuncIndex);
 
       cost += getCost(op.name, costTable.code);
@@ -73,12 +79,13 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
       meteredCode.concat(meteringStatement(meterType, cost, meterFuncIndex));
     }
 
-    // start a new segment
-    meteredCode.concat(code.slice(0, i));
-    code = code.slice(i);
+    meteredCode.concat(entry.code.slice(start, i));
+
+    start = i;
     cost = 0;
   }
 
+  // re-assign code
   entry.code = meteredCode.buffer;
   return entry;
 }
