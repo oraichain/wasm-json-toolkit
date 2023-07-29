@@ -7,7 +7,6 @@ module.exports = {
   encode,
   decode,
   read,
-  // readBn,
   write
 };
 
