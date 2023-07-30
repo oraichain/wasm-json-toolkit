@@ -1,33 +1,39 @@
 const OP_IMMEDIATES = require('./immediates.json');
 const { ReadArray } = require('./stream');
 
+const cache = new Map();
+
 module.exports = (text) => {
-  const json = [];
-  const textArray = new ReadArray(text.split(/\s|\n/));
-  while (!textArray.end) {
-    const textOp = textArray.shift();
-    const jsonOp = {};
+  if (!cache.has(text)) {
+    const json = [];
+    const textArray = new ReadArray(text.split(/\s|\n/));
+    while (!textArray.end) {
+      const textOp = textArray.shift();
+      const jsonOp = {};
 
-    let [type, name] = textOp.split('.');
+      let [type, name] = textOp.split('.');
 
-    if (name === undefined) {
-      name = type;
-    } else {
-      jsonOp.return_type = type;
+      if (name === undefined) {
+        name = type;
+      } else {
+        jsonOp.return_type = type;
+      }
+
+      jsonOp.name = name;
+
+      const immediate = OP_IMMEDIATES[jsonOp.name === 'const' ? jsonOp.return_type : jsonOp.name];
+
+      if (immediate) {
+        jsonOp.immediates = immediataryParser(immediate, textArray);
+      }
+
+      json.push(jsonOp);
     }
-
-    jsonOp.name = name;
-
-    const immediate = OP_IMMEDIATES[jsonOp.name === 'const' ? jsonOp.return_type : jsonOp.name];
-
-    if (immediate) {
-      jsonOp.immediates = immediataryParser(immediate, textArray);
-    }
-
-    json.push(jsonOp);
+    cache.set(text, json);
+    return json;
   }
 
-  return json;
+  return cache.get(text);
 };
 
 /**

@@ -18,6 +18,21 @@ export class ReadStream {
    */
   readByte(): number;
 
+  /**
+   * read `num` number of bytes from the pipe
+   * @param {Number} num
+   * @return {Array}
+   */
+  readArray(num: number): Array;
+
+  /**
+   * read `num` number of bytes from the pipe
+   * @param {Number} num
+   * @param {BufferEncoding} encoding
+   * @return {string}
+   */
+  readString(num: number, encoding: BufferEncoding): string;
+
   peek(ind: number): number;
 
   /**

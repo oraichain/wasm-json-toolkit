@@ -35,16 +35,11 @@ function remapOp(op, funcIndex) {
   }
 }
 
-const meteringCache = new Map();
 function meteringStatement(meterType, cost, meteringImportIndex) {
-  const key = `${meterType}.const ${cost} call ${meteringImportIndex}`;
-  if (!meteringCache.has(key)) {
-    meteringCache.set(key, text2json(key));
-  }
-  return meteringCache.get(key);
+  return text2json(`${meterType}.const ${cost} call ${meteringImportIndex}`);
 }
 
-const branchingOps = new Set(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop']);
+const branchingOps = Object.fromEntries(['grow_memory', 'end', 'br', 'br_table', 'br_if', 'if', 'else', 'return', 'loop'].map((key) => [key, true]));
 const meteredCode = new WriteArray(100_000); // limit of wasm
 
 // meters a single code entrie
@@ -67,7 +62,7 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
       remapOp(op, meterFuncIndex);
 
       cost += getCost(op.name, costTable.code);
-      if (branchingOps.has(op.name)) {
+      if (branchingOps[op.name]) {
         break;
       }
     }

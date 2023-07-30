@@ -16,6 +16,29 @@ class ReadStream {
     return this._buffer.subarray(this._bytesRead, (this._bytesRead += num));
   }
 
+  /**
+   * read `num` number of bytes from the pipe
+   * @param {Number} num
+   * @return {Array}
+   */
+  readArray(num) {
+    const arr = new Array(num);
+    for (let i = 0; i < num; ++i) {
+      arr[i] = this._buffer[this._bytesRead++];
+    }
+    return arr;
+  }
+
+  /**
+   * read `num` number of bytes from the pipe
+   * @param {Number} num
+   * @param {BufferEncoding} encoding
+   * @return {string}
+   */
+  readString(num, encoding) {
+    return this._buffer.toString(encoding, this._bytesRead, (this._bytesRead += num));
+  }
+
   peek(ind) {
     return this._buffer[this._bytesRead + ind];
   }

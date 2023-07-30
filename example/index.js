@@ -14,4 +14,4 @@ console.timeEnd('meterJSON');
 console.time('json2wasm');
 const newWasm = json2wasm(json);
 console.timeEnd('json2wasm');
-console.timeLog('wasmprocess', 'wasm length', wasm.length, 'wasm modifed length', newWasm.length);
+console.timeLog('wasmprocess', 'wasm modifed length', newWasm.length, 'memory usage', process.memoryUsage().rss / 1000000, 'MB');

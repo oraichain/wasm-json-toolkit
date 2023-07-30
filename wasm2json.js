@@ -20,20 +20,23 @@ const LANGUAGE_TYPES = {
 // A single-byte unsigned integer indicating the kind of definition being imported or defined:
 const EXTERNAL_KIND = ['function', 'table', 'memory', 'global'];
 
+/**
+ * @param {ReadStream} stream
+ * @return {Object}
+ */
 const parsePreramble = (stream) => {
-  const magic = [...stream.read(4)];
-  const version = [...stream.read(4)];
-  return { name: 'preramble', magic, version };
+  const json = { name: 'preramble' };
+  json.magic = stream.readArray(4);
+  json.version = stream.readArray(4);
+  return json;
 };
 
 const parseSectionHeader = (stream) => {
-  const id = stream.readByte();
-  const size = unsigned.read(stream);
-  return {
-    id,
-    name: SECTION_IDS[id],
-    size
-  };
+  const json = {};
+  json.id = stream.readByte();
+  json.name = SECTION_IDS[json.id];
+  json.size = unsigned.read(stream);
+  return json;
 };
 
 const OPCODES = [
@@ -239,50 +242,89 @@ const OPCODES = [
 const SECTION_IDS = ['custom', 'type', 'import', 'function', 'table', 'memory', 'global', 'export', 'start', 'element', 'code', 'data'];
 
 const immediataryParsers = {
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   varuint1: (stream) => {
     return stream.readByte();
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   varuint32: (stream) => {
-    const int32 = unsigned.read(stream);
-    return int32;
+    return unsigned.read(stream);
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   varint32: (stream) => {
-    const int32 = signed.readBn(stream).toNumber();
-    return int32;
+    return signed.readBn(stream).toNumber();
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   varint64: (stream) => {
-    const int64 = signed.read(stream);
-    return int64;
+    return signed.read(stream);
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   uint32: (stream) => {
-    return [...stream.read(4)];
+    return stream.readArray(4);
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   uint64: (stream) => {
-    return [...stream.read(8)];
+    return stream.readArray(8);
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   block_type: (stream) => {
     const type = stream.readByte();
     return LANGUAGE_TYPES[type];
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   br_table: (stream) => {
+    const json = {};
     const num = unsigned.read(stream);
-    const targets = new Array(num);
+    json.targets = new Array(num);
 
     for (let i = 0; i < num; i++) {
-      targets[i] = unsigned.read(stream);
+      json.targets[i] = unsigned.read(stream);
     }
-    const defaultTarget = unsigned.read(stream);
-    return {
-      targets,
-      defaultTarget
-    };
+    json.defaultTarget = unsigned.read(stream);
+    return json;
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   call_indirect: (stream) => {
     const json = {};
     json.index = unsigned.read(stream);
     json.reserved = stream.readByte();
     return json;
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   memory_immediate: (stream) => {
     const json = {};
     json.flags = unsigned.read(stream);
@@ -347,8 +389,7 @@ const sectionParsers = {
     };
     const section = new ReadStream(stream.read(header.size));
     const nameLen = unsigned.read(section);
-    const name = section.read(nameLen);
-    json.sectionName = name.toString();
+    json.sectionName = section.readString(nameLen);
     json.payload = [...section.buffer];
     return json;
   },
@@ -384,6 +425,11 @@ const sectionParsers = {
     }
     return json;
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   import: (stream) => {
     const numberOfEntries = unsigned.read(stream);
     const json = {
@@ -394,10 +440,10 @@ const sectionParsers = {
     for (let i = 0; i < numberOfEntries; i++) {
       const entry = {};
       const moduleLen = unsigned.read(stream);
-      entry.moduleStr = stream.read(moduleLen).toString();
+      entry.moduleStr = stream.readString(moduleLen);
 
       const fieldLen = unsigned.read(stream);
-      entry.fieldStr = stream.read(fieldLen).toString();
+      entry.fieldStr = stream.readString(fieldLen);
       const kind = stream.readByte(); // read single byte
       entry.kind = EXTERNAL_KIND[kind];
       entry.type = typeParsers[entry.kind](stream);
@@ -459,6 +505,11 @@ const sectionParsers = {
     }
     return json;
   },
+
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   export: (stream) => {
     const numberOfEntries = unsigned.read(stream);
     const json = {
@@ -469,7 +520,7 @@ const sectionParsers = {
     for (let i = 0; i < numberOfEntries; i++) {
       const strLength = unsigned.read(stream);
       const entry = {};
-      entry.field_str = stream.read(strLength).toString();
+      entry.field_str = stream.readString(strLength);
       const kind = stream.readByte();
       entry.kind = EXTERNAL_KIND[kind];
       entry.index = unsigned.read(stream);
@@ -478,11 +529,9 @@ const sectionParsers = {
     return json;
   },
   start: (stream) => {
-    const index = unsigned.read(stream);
-    return {
-      name: 'start',
-      index
-    };
+    const json = { name: 'start' };
+    json.index = unsigned.read(stream);
+    return json;
   },
   element: (stream) => {
     const numberOfEntries = unsigned.read(stream);
@@ -543,6 +592,10 @@ const sectionParsers = {
     }
     return json;
   },
+  /**
+   * @param {ReadStream} stream
+   * @return {Object}
+   */
   data: (stream) => {
     const numberOfEntries = unsigned.read(stream);
     const json = {
@@ -555,7 +608,7 @@ const sectionParsers = {
       entry.index = unsigned.read(stream);
       entry.offset = typeParsers.initExpr(stream);
       const segmentSize = unsigned.read(stream);
-      entry.data = [...stream.read(segmentSize)];
+      entry.data = stream.readArray(segmentSize);
 
       json.entries[i] = entry;
     }
