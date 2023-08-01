@@ -24,7 +24,7 @@ function read(stream) {
   while (count--) {
     const a = stream.readByte() & LOWER_7; /* masking, we only care about lower 7 bits */
     result |= a << shift; /* shift this value left and add it */
-    shift += 8 - 1;
+    shift += 7;
   }
   return result;
 }
@@ -39,7 +39,7 @@ function write(number, stream) {
   do {
     let byte = a & LOWER_7;
     // we only care about lower 7 bits
-    a >>= 8 - 1;
+    a >>= 7;
     // shift
     if (a) byte = byte | UPPER_1; /* if remaining is truthy (!= 0), set highest bit */
     stream.writeByte(byte);
