@@ -12,6 +12,6 @@ export function encode(num: string | number): Buffer;
  * @return {String}
  */
 export function decode(buffer: Buffer): string;
-export function write(num: number, stream: WriteStream): void;
+export function write(num: number | string, stream: WriteStream): void;
 export function read(stream: ReadStream): string;
 export function readBn(stream: ReadStream): BigInt;

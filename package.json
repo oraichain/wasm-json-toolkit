@@ -16,9 +16,7 @@
   ],
   "author": "Warp Team <dev@warp.cc>",
   "license": "MPL-2.0",
-  "dependencies": {
-    "bn.js": "^5.2.1"
-  },
+  "dependencies": {},
   "bin": {
     "wasm2json": "./bin/wasm2json",
     "json2wasm": "./bin/json2wasm"

@@ -262,31 +262,24 @@ const typeGenerators = {
 const immediataryGenerators = {
   varuint1: (json, stream) => {
     stream.writeByte(json);
-    return stream;
   },
   varuint32: (json, stream) => {
     unsigned.write(json, stream);
-    return stream;
   },
   varint32: (json, stream) => {
     signed.write(json, stream);
-    return stream;
   },
   varint64: (json, stream) => {
     signed.write(json, stream);
-    return stream;
   },
   uint32: (json, stream) => {
     stream.writeArray(json);
-    return stream;
   },
   uint64: (json, stream) => {
     stream.writeArray(json);
-    return stream;
   },
   block_type: (json, stream) => {
     stream.writeByte(LANGUAGE_TYPES[json]);
-    return stream;
   },
   br_table: (json, stream) => {
     unsigned.write(json.targets.length, stream);
@@ -294,18 +287,14 @@ const immediataryGenerators = {
       unsigned.write(target, stream);
     }
     unsigned.write(json.defaultTarget, stream);
-    return stream;
   },
   call_indirect: (json, stream) => {
     unsigned.write(json.index, stream);
     stream.writeByte(json.reserved);
-    return stream;
   },
   memory_immediate: (json, stream) => {
     unsigned.write(json.flags, stream);
     unsigned.write(json.offset, stream);
-
-    return stream;
   }
 };
 
@@ -325,7 +314,6 @@ const entryGenerators = {
     if (entry.return_type) {
       stream.writeByte(LANGUAGE_TYPES[entry.return_type]);
     }
-    return stream.buffer;
   },
   import: (entry, stream) => {
     // write the module string
@@ -339,13 +327,11 @@ const entryGenerators = {
   },
   function: (entry, stream) => {
     unsigned.write(entry, stream);
-    return stream.buffer;
   },
   table: typeGenerators.table,
   global: (entry, stream) => {
     typeGenerators.global(entry.type, stream);
     typeGenerators.initExpr(entry.init, stream);
-    return stream;
   },
   memory: typeGenerators.memory,
   export: (entry, stream) => {
@@ -353,7 +339,6 @@ const entryGenerators = {
     stream.writeString(entry.field_str);
     stream.writeByte(EXTERNAL_KIND[entry.kind]);
     unsigned.write(entry.index, stream);
-    return stream;
   },
   element: (entry, stream) => {
     unsigned.write(entry.index, stream);
@@ -362,8 +347,6 @@ const entryGenerators = {
     for (let elem of entry.elements) {
       unsigned.write(elem, stream);
     }
-
-    return stream;
   },
   code: (entry, stream) => {
     // 4 bytes for store length, so use the same allocated memory
@@ -382,14 +365,12 @@ const entryGenerators = {
 
     unsigned.write(codeStream.bytesWrote, stream);
     stream.write(codeStream.buffer);
-    return stream;
   },
   data: (entry, stream) => {
     unsigned.write(entry.index, stream);
     typeGenerators.initExpr(entry.offset, stream);
     unsigned.write(entry.data.length, stream);
     stream.writeArray(entry.data);
-    return stream;
   }
 };
 
@@ -414,13 +395,11 @@ const generateSection = function (json, stream) {
   // write the size of the payload
   unsigned.write(payload.bytesWrote, stream);
   stream.write(payload.buffer);
-  return stream;
 };
 
 const generatePreramble = (json, stream) => {
   stream.writeArray(json.magic);
   stream.writeArray(json.version);
-  return stream;
 };
 
 const generateOp = (json, stream) => {
@@ -435,7 +414,6 @@ const generateOp = (json, stream) => {
   if (immediates) {
     immediataryGenerators[immediates](json.immediates, stream);
   }
-  return stream;
 };
 
 module.exports = (json, size) => {

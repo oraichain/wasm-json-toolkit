@@ -1,12 +1,11 @@
 import { WriteStream, ReadStream } from './stream';
-import BN from 'bn.js';
 
 /**
  * LEB128 encodeds an interger
- * @param {String|Number} num
+ * @param {Number} num
  * @return {Buffer}
  */
-export function encode(num: string | number): Buffer;
+export function encode(num: number): Buffer;
 /**
  * decodes a LEB128 encoded interger
  * @param {Buffer} buffer
