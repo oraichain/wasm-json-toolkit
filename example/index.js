@@ -18,62 +18,61 @@ console.timeLog('wasmprocess', 'wasm modifed length', newWasm.length, 'memory us
 
 // const Bn = require('bn.js');
 
-// function readBn1(stream) {
-//   let num = new Bn(0);
-//   let shift = 0;
-//   let byt;
-//   let ind = 0;
+// function write1(number) {
+//   let ret = [];
+//   let num = new Bn(number);
 //   while (true) {
-//     byt = stream[ind++];
-//     num.ior(new Bn(byt & 0x7f).shln(shift));
-//     shift += 7;
-//     if (byt >> 7 === 0) {
+//     const i = num.maskn(7).toNumber();
+
+//     const check = (i & 0x40) !== 0;
+//     num.ishrn(7);
+
+//     if (num.isZero() && !check) {
+//       ret.push(i);
 //       break;
 //     }
+//     ret.push(i | 0x80);
 //   }
-
-//   return num.fromTwos(shift);
+//   return ret;
 // }
 
-// BigInt.prototype.toNumber = function () {
-//   return Number(this);
-// };
-
-// function readBn(stream) {
-//   let num = 0n;
-//   let shift = 0n;
-//   let byt;
-//   let ind = 0;
+// function write(number) {
+//   let ret = [];
+//   let num = number;
 //   while (true) {
-//     byt = stream[ind++];
-//     num |= BigInt(byt & 0x7f) << shift;
-//     shift += 7n;
-//     if (byt >> 7 === 0) {
+//     const i = Number(num) & 0b01111111;
+//     const check = (i & 0x40) === 0;
+//     num >>= 7;
+
+//     if (num === 0 && check) {
+//       ret.push(i);
 //       break;
 //     }
+//     ret.push(i | 0x80);
 //   }
-
-//   const mask = 1n << (shift - 1n);
-//   if ((num & mask) !== 0n) {
-//     num = -((~num & (mask - 1n)) + 1n);
-//   }
-
-//   return num.fromTwos(shift);
+//   return ret;
 // }
 
-// const test = [[127], [128, 126], [129, 128, 128, 128, 120]];
+// const test = [
+//   //   63, 1278, 1606, 571, 1338, 63, 1, 303, 466, 466, 37157, 4294967296, 75448, 4294967295,
+//   1048576, 1053912, 1053968, 1057800, 1057824, 1057848, 1057872, 1058688, 1059208, 1060208, 1067136, 1072178, 1072241
+// ];
 // const n = 1000;
 
+// const ret1 = [];
 // console.time('test');
 // for (let i = 0; i < n; ++i)
 //   for (const s of test) {
-//     readBn(s);
+//     ret1.push(...write(s));
 //   }
 // console.timeEnd('test');
 
+// const ret = [];
 // console.time('test1');
 // for (let i = 0; i < n; ++i)
 //   for (const s of test) {
-//     readBn1(s);
+//     ret.push(...write1(s));
 //   }
 // console.timeEnd('test1');
+
+// console.log(ret.toString() === ret1.toString());

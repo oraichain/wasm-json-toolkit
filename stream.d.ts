@@ -59,6 +59,10 @@ export class WriteStream {
    * @param {Buffer} buf
    */
   write(buf: Buffer): void;
+
+  writeByte(byte: number): void;
+  writeString(str: string): void;
+
   /**
    * return the internal buffer
    * @return {Buffer}

@@ -48,16 +48,37 @@ function readBn(stream) {
  * @param {WriteStream} stream
  */
 function write(number, stream) {
-  let num = new Bn(number);
-  const isNeg = num.isNeg();
-  if (isNeg) {
-    // add 8 bits for padding
-    num = num.toTwos(num.bitLength() + 8);
+  if (number < 0) return writeNeg(number, stream);
+
+  let num = BigInt(number);
+  while (true) {
+    const i = Number(num & 0x7fn);
+    num >>= 7n;
+    const check = (i & 0x40) === 0;
+    if (num === 0n && check) {
+      stream.writeByte(i);
+      break;
+    }
+    stream.writeByte(i | 0x80);
   }
+}
+
+/**
+ * LEB128 encodeds an interger
+ * @param {Number} number
+ * @param {WriteStream} stream
+ */
+function writeNeg(number, stream) {
+  let num = new Bn(number);
+
+  // add 8 bits for padding
+  num = num.toTwos(num.bitLength() + 8);
+
   while (true) {
     const i = num.maskn(7).toNumber();
+    const check = (i & 0x40) !== 0;
     num.ishrn(7);
-    if ((isNeg && num.toString(2).indexOf('0') < 0 && (i & 0x40) !== 0) || (num.isZero() && (i & 0x40) === 0)) {
+    if ((num.toString(2).indexOf('0') < 0 && check) || (num.isZero() && !check)) {
       stream.writeByte(i);
       break;
     }

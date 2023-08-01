@@ -1,8 +1,5 @@
 const { ReadStream, WriteStream } = require('./stream');
 
-const LOWER_7 = 0b01111111;
-const UPPER_1 = 0b10000000;
-
 module.exports = {
   encode,
   decode,
@@ -17,12 +14,12 @@ module.exports = {
 function read(stream) {
   let count = 0;
   // find null byte to read reversed
-  while (stream.peek(count++) & UPPER_1);
+  while (stream.peek(count++) & 0x80);
 
   let result = 0,
     shift = 0;
   while (count--) {
-    const a = stream.readByte() & LOWER_7; /* masking, we only care about lower 7 bits */
+    const a = stream.readByte() & 0x7f; /* masking, we only care about lower 7 bits */
     result |= a << shift; /* shift this value left and add it */
     shift += 7;
   }
@@ -37,11 +34,11 @@ function read(stream) {
 function write(number, stream) {
   let a = number;
   do {
-    let byte = a & LOWER_7;
+    let byte = a & 0x7f;
     // we only care about lower 7 bits
     a >>= 7;
     // shift
-    if (a) byte = byte | UPPER_1; /* if remaining is truthy (!= 0), set highest bit */
+    if (a !== 0) byte |= 0x80; /* if remaining is truthy (!= 0), set highest bit */
     stream.writeByte(byte);
   } while (a);
 }
