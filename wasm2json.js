@@ -261,7 +261,7 @@ const immediataryParsers = {
    * @return {Object}
    */
   varint32: (stream) => {
-    return signed.readBn(stream).toNumber();
+    return Number(signed.readBn(stream));
   },
   /**
    * @param {ReadStream} stream

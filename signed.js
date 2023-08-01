@@ -19,25 +19,27 @@ function read(stream) {
 
 /**
  * @param {ReadStream} stream
- * @return {Bn}
+ * @return {BigInt}
  */
 function readBn(stream) {
-  const num = new Bn(0);
-  let shift = 0;
+  let num = 0n;
+  let shift = 0n;
   let byt;
   while (true) {
     byt = stream.readByte();
-    num.ior(new Bn(byt & 0x7f).shln(shift));
-    shift += 7;
+    num |= BigInt(byt & 0x7f) << shift;
+    shift += 7n;
     if (byt >> 7 === 0) {
       break;
     }
   }
-  // sign extend if negitive
-  if (byt & 0x40) {
-    num.setn(shift);
+
+  const mask = 1n << (shift - 1n);
+  if ((num & mask) !== 0n) {
+    num = -((~num & (mask - 1n)) + 1n);
   }
-  return num.fromTwos(shift);
+
+  return num;
 }
 
 /**

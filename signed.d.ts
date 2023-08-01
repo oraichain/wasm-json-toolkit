@@ -1,4 +1,3 @@
-import BN from 'bn.js';
 import { WriteStream, ReadStream } from './stream';
 
 /**
@@ -15,4 +14,4 @@ export function encode(num: string | number): Buffer;
 export function decode(buffer: Buffer): string;
 export function write(num: number, stream: WriteStream): void;
 export function read(stream: ReadStream): string;
-export function readBn(stream: ReadStream): BN;
+export function readBn(stream: ReadStream): BigInt;
