@@ -32,15 +32,15 @@ function read(stream) {
  * @param {WriteStream} stream
  */
 function write(number, stream) {
-  let a = number;
+  // number is copy by value so we can use it directly
   do {
-    let byte = a & 0x7f;
+    let byte = number & 0x7f;
     // we only care about lower 7 bits
-    a >>= 7;
+    number >>= 7;
     // shift
-    if (a !== 0) byte |= 0x80; /* if remaining is truthy (!= 0), set highest bit */
+    if (number !== 0) byte |= 0x80; /* if remaining is truthy (!= 0), set highest bit */
     stream.writeByte(byte);
-  } while (a);
+  } while (number);
 }
 
 /**
