@@ -18,12 +18,19 @@ A small toolkit for converting wasm binaries into json and back.
 
 ```javascript
 const fs = require('fs');
-const wasm2json = require('@oraichain/wasm-json-toolkit').wasm2json;
+const { meterWASM } = require('@oraichain/wasm-json-toolkit');
 
 const wasm = fs.readFileSync('./test.wasm');
-const json = wasm2json(wasm);
-
-console.log(JSON.stringify(json, null, 2));
+const newWasm = meterWASM(wasm, {
+  metering: {
+    usegas: (gas) => {
+      gasUsed += gas;
+      if (gasUsed > limit) {
+        throw new Error('out of gas!');
+      }
+    }
+  }
+});
 ```
 
 # CLI
@@ -150,7 +157,7 @@ wast
 wasm
 
 ```javascript
-0x010661646454776f00000a09010700200020016a0b
+0x010661646454776f00000a09010700200020016a0b;
 ```
 
 json
@@ -159,15 +166,15 @@ json
 [
   {
     "name": "preramble",
-    "magic": [0,97,115,109],
-    "version": [13,0,0,0]
+    "magic": [0, 97, 115, 109],
+    "version": [13, 0, 0, 0]
   },
   {
     "name": "type",
     "entries": [
       {
         "form": "func",
-        "params": ["i32","i32"],
+        "params": ["i32", "i32"],
         "return_type": "i32"
       }
     ]
