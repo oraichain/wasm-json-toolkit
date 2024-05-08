@@ -53,7 +53,7 @@ function write(number, stream) {
     // add 8 bits for padding
     num = -num;
     // this will force using bigint for log2
-    const mask = 1n << BigInt(Math.ceil(Math.log2(Number(num))) + 8);
+    const mask = 1n << BigInt(((Math.log2(Number(num)) + 1) >> 0) + 8);
     // inverse bit then plus 1
     num = (~num & (mask - 1n)) + 1n;
   }
